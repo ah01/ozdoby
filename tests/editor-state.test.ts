@@ -40,6 +40,18 @@ it('presets and reset restore canonical profile values and clear invalid drafts'
   expect(editorReducer(state, { type: 'reset' }).parameters).toEqual(createPreset('drop'));
 });
 
+it('edits peak position in percent, revises transformations and resets their defaults', () => {
+  let state = initialEditor(createPreset('egg'), defaultPrint);
+  expect(state.drafts['body.maxRadiusAt']).toBe('58');
+  state = editorReducer(state, { type: 'field', id: 'body.maxRadiusAt', value: '42' });
+  expect(state.parameters.body.maxRadiusAt).toBe(0.42);
+  state = editorReducer(state, { type: 'surfaceChoice', id: 'amplitudeProfile', value: 'middle' });
+  state = editorReducer(state, { type: 'surfaceChoice', id: 'twistProfile', value: 'reverse' });
+  expect(state.revision).toBe(3); expect(state.parameters.surface.twistProfile).toBe('reverse');
+  const reset = editorReducer(state, { type: 'reset' });
+  expect(reset.parameters).toEqual(createPreset('egg')); expect(reset.errors).toEqual({});
+});
+
 it('retains the bottom-layer clearance constraint when the neck changes', () => {
   const state = initialEditor(createPreset(), { ...defaultPrint, bottomSolidLayers: 30 });
   const next = editorReducer(state, { type: 'field', id: 'neck.lengthMm', value: '6' });

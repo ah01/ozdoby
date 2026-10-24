@@ -1,7 +1,7 @@
 import type { OrnamentParameters, PrintAssumptions } from '../domain/parameters';
 import { GeometryError } from '../geometry/mesh';
-import { smoothstep } from '../geometry/profile';
-import { surfaceRadius } from '../geometry/surface';
+import { surfaceAmplitude, surfaceRadius, surfaceTwist } from '../geometry/surface';
+import { derivativeBounds, surfaceKnots } from '../geometry/surfaceBounds';
 import { SegmentIndex } from './segmentIndex';
 import { defaultAnalysisOptions, type AnalysisOptions, type LayerBand, type LayerReport, type RiskCode } from './types';
 
@@ -11,21 +11,18 @@ export interface AnalysisSurface {
   curvatureRadius?: (theta: number, z: number) => number;
 }
 export function ornamentSurface(p: OrnamentParameters): AnalysisSurface {
-  const h = p.body.heightMm, n = p.neck.lengthMm, b = p.surface.blendLengthMm;
+  const h = p.body.heightMm, n = p.neck.lengthMm;
   const r = p.body.baseDiameterMm / 2, a = p.surface.amplitudeMm, k = p.surface.ribs;
-  const phase1 = k * Math.abs(p.surface.twistDeg * Math.PI / 180) * 1.5 / h;
-  const phase2 = k * Math.abs(p.surface.twistDeg * Math.PI / 180) * 6 / h ** 2;
+  const knots = surfaceKnots(p);
+  const zSecondBound = Math.max(...knots.slice(1).map((hi, i) => derivativeBounds(p, knots[i]!, hi)[2]));
   return { heightMm: n + h, radius: (theta, z) => surfaceRadius(p, theta, z), circular: a === 0,
     angularSecondBound: r + a * (k + 1) ** 2,
-    zSecondBound: Math.max(6 * (r - p.neck.diameterMm / 2) / (h * p.body.maxRadiusAt) ** 2,
-      6 * (r - p.body.tipRadiusMm) / (h * (1 - p.body.maxRadiusAt)) ** 2)
-      + a * (6 / b ** 2 + 3 / b * phase1 + phase2 + phase1 ** 2),
-    minimumAngles: Math.max(128, 16 * k), knots: [n, n + b, n + h * p.body.maxRadiusAt, n + h - b, n + h],
+    zSecondBound,
+    minimumAngles: Math.max(128, 16 * k), knots,
     curvatureRadius: a === 0 ? undefined : (theta, z) => {
-      const u = Math.max(0, Math.min(1, (z - n) / h));
-      const amplitude = z <= n ? 0 : a * smoothstep((z - n) / b) * smoothstep((n + h - z) / b);
+      const amplitude = surfaceAmplitude(p, z);
       if (amplitude < 1e-8) return Infinity;
-      const phase = k * (theta - p.surface.twistDeg * Math.PI / 180 * smoothstep(u));
+      const phase = k * (theta - surfaceTwist(p, z));
       const radius = surfaceRadius(p, theta, z), first = -amplitude * k * Math.sin(phase), second = -amplitude * k * k * Math.cos(phase);
       const curvature = Math.abs(radius ** 2 + 2 * first ** 2 - radius * second) / (radius ** 2 + first ** 2) ** 1.5;
       return curvature > 1e-12 ? 1 / curvature : Infinity;

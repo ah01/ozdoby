@@ -1,5 +1,6 @@
 import { ornamentSchema, type OrnamentParameters, type PrintAssumptions, type ShapeId } from '../domain/parameters';
 import { createPreset } from '../domain/presets';
+import type { SurfaceChoice } from '../domain/transformations';
 import { draftsFor, fields, setField, type DraftValues, type FieldErrors, type FieldId } from '../features/editor/fields';
 import { hashInput } from '../io/preset';
 import { printDraftsFor, resolvePrint, type PrintDrafts, type PrintErrors, type PrintFieldId } from '../features/printability/fields';
@@ -15,6 +16,7 @@ export interface EditorState {
   printRevision: number;
 }
 export type EditorAction = { type: 'field'; id: FieldId; value: string }
+  | { type: 'surfaceChoice'; id: SurfaceChoice; value: string }
   | { type: 'printField'; id: PrintFieldId; value: string }
   | { type: 'preset'; shape: ShapeId } | { type: 'reset' };
 
@@ -35,7 +37,7 @@ function resolveDrafts(base: OrnamentParameters, drafts: DraftValues): { paramet
       errors[field.id] = `Rozsah je ${field.min} až ${field.max}${field.unit ? ` ${field.unit}` : ''}.`;
     } else if ('integer' in field && field.integer && !Number.isInteger(number)) {
       errors[field.id] = 'Počet žeber musí být celé číslo.';
-    } else setField(candidate, field.id, number);
+    } else setField(candidate, field.id, number / ('scale' in field ? field.scale : 1));
   }
   if (Object.keys(errors).length) return { errors };
   const validated = ornamentSchema.safeParse(candidate);
@@ -62,8 +64,11 @@ export function editorReducer(state: EditorState, action: EditorAction): EditorS
       ...withPrint(state, parameters, state.printDrafts), revision: state.revision + 1 };
   }
   if (action.type === 'printField') return { ...state, ...withPrint(state, state.parameters, { ...state.printDrafts, [action.id]: action.value }) };
-  const drafts = { ...state.drafts, [action.id]: action.value };
-  const resolved = resolveDrafts(state.parameters, drafts);
+  const drafts = action.type === 'field' ? { ...state.drafts, [action.id]: action.value } : state.drafts;
+  const candidate = action.type === 'surfaceChoice'
+    ? { ...state.parameters, surface: { ...state.parameters.surface, [action.id]: action.value } } as OrnamentParameters
+    : state.parameters;
+  const resolved = resolveDrafts(candidate, drafts);
   if (!resolved.parameters) return { ...state, drafts, errors: resolved.errors };
   const changed = hashInput(resolved.parameters) !== hashInput(state.parameters);
   return { ...state, drafts, errors: {}, parameters: changed ? resolved.parameters : state.parameters,

@@ -1,5 +1,6 @@
 import { ornamentSchema, type OrnamentParameters } from '../domain/parameters';
 import { surfacePoint } from './surface';
+import { derivativeBounds, surfaceKnots } from './surfaceBounds';
 import { defaultStlDetail, EXPORT_TRIANGLE_LIMIT, PREVIEW_TRIANGLE_LIMIT, stlDetails, type StlDetail } from '../domain/stlDetail';
 
 export const FaceRegion = { neck: 0, body: 1, baseCap: 2, tipCap: 3 } as const;
@@ -13,30 +14,6 @@ export interface MeshResult extends MeshData {
 }
 export class GeometryError extends Error {
   constructor(public readonly code: string, message: string) { super(message); }
-}
-
-/** Upper bounds on |Pθθ|, |Pθz| and |Pzz| on an interval split at all profile knots.
- * For a triangle, Taylor remainder <= Mθθ Δθ²/8 + Mθz ΔθΔz/4 + Mzz Δz²/8.
- * The 1/8 factors follow from barycentric variance <= range²/4; the mixed
- * factor follows from Cauchy-Schwarz. See doc/geometry.md.
- */
-function derivativeBounds(p: OrnamentParameters, lo: number, hi: number): [number, number, number] {
-  const rn = p.neck.diameterMm / 2, r = p.body.baseDiameterMm / 2;
-  if (hi <= p.neck.lengthMm) return [rn, 0, 0];
-  const h = p.body.heightMm, peak = p.body.maxRadiusAt, b = p.surface.blendLengthMm;
-  const lower = (lo + hi) / 2 <= p.neck.lengthMm + h * peak;
-  const length = h * (lower ? peak : 1 - peak);
-  const delta = lower ? r - rn : r - p.body.tipRadiusMm;
-  const baseFirst = 1.5 * delta / length;
-  const baseSecond = 6 * delta / (length * length);
-  const a = p.surface.amplitudeMm, k = p.surface.ribs;
-  const ramp = lo < p.neck.lengthMm + b - 1e-10 || hi > p.neck.lengthMm + h - b + 1e-10;
-  const e1 = ramp ? 1.5 / b : 0, e2 = ramp ? 6 / (b * b) : 0;
-  const twist = Math.abs(p.surface.twistDeg * Math.PI / 180);
-  const phase1 = k * twist * 1.5 / h, phase2 = k * twist * 6 / (h * h);
-  return [r + a * (k + 1) ** 2,
-    baseFirst + a * (k + 1) * (e1 + phase1),
-    baseSecond + a * (e2 + 2 * e1 * phase1 + phase2 + phase1 * phase1)];
 }
 
 export function generateMesh(input: OrnamentParameters, quality: 'preview' | 'export' = 'export', detail: StlDetail = defaultStlDetail): MeshResult {
@@ -54,8 +31,7 @@ export function generateMesh(input: OrnamentParameters, quality: 'preview' | 'ex
   const maxAngular = p.body.baseDiameterMm / 2 + p.surface.amplitudeMm * (p.surface.ribs + 1) ** 2;
   while (maxAngular * (2 * Math.PI / angles) ** 2 / 8 > interpolationBudget / 3) angles *= 2;
   const dt = 2 * Math.PI / angles;
-  const knots = [...new Set([0, n, n + h * p.body.maxRadiusAt,
-    n + p.surface.blendLengthMm, n + h - p.surface.blendLengthMm, n + h])].sort((a, b) => a - b);
+  const knots = surfaceKnots(p);
   const heights = [0];
   let errorBoundMm = 0;
   const split = (lo: number, hi: number, depth: number): void => {

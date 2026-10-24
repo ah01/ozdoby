@@ -18,7 +18,9 @@
       "ribs": 12,
       "amplitudeMm": 0,
       "twistDeg": 0,
-      "blendLengthMm": 8
+      "blendLengthMm": 8,
+      "amplitudeProfile": "uniform",
+      "twistProfile": "smooth"
     }
   },
   "print": {

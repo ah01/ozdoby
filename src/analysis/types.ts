@@ -1,6 +1,6 @@
 import type { PrintAssumptions } from '../domain/parameters';
 
-export const ANALYSIS_VERSION = '1.0.0';
+export const ANALYSIS_VERSION = '1.1.0';
 export type RiskLevel = 'low' | 'warning' | 'high';
 export type RiskCode = 0 | 1 | 2;
 export interface AnalysisMessage {

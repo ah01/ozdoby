@@ -1,6 +1,24 @@
 # Geometrický kontrakt a numerika
 
-Generátor 0.1.0 používá profil a sinusové žebrování z implementačního plánu. Rozměry jsou v mm, krček leží na Z = 0 až `neck.lengthMm`. Tři presety jsou parametry téže profilové funkce, ne samostatné sítě. Výchozí přesnost exportu je 0,05 mm; náhledu 0,2 mm. Na přání uživatele lze STL výslovně přepnout na hrubší 0,15 mm nebo jemné 0,02 mm. Jde o maximální prostorovou odchylku triangulace, nikoli výšku tiskové vrstvy; hrubší volba ustupuje od původního standardního požadavku 0,05 mm.
+Generátor 0.1.0 používá profil a sinusové žebrování z implementačního plánu, rozšířené o vejce, diamant a průběhy transformací. Rozměry jsou v mm, krček leží na Z = 0 až `neck.lengthMm`. Původní tři presety používají kubický smoothstep, vejce kosinový profil a diamant zaoblený lineární profil. Všechny mají společný radiální generátor. Výchozí přesnost exportu je 0,05 mm; náhledu 0,2 mm. Na přání uživatele lze STL výslovně přepnout na hrubší 0,15 mm nebo jemné 0,02 mm. Jde o maximální prostorovou odchylku triangulace, nikoli výšku tiskové vrstvy; hrubší volba ustupuje od původního standardního požadavku 0,05 mm.
+
+## Profily a transformace
+
+Normalizovaný úsek profilu má parametr `t` v [0,1], změnu poloměru `D` a délku `L`. Všechny varianty jsou monotónní a mají nulový sklon na obou koncích, takže zachovají kruhové napojení krčku a maximum bez hrany.
+
+| Profil | Interpolace | Mez první derivace podle t | Mez druhé derivace podle t |
+| --- | --- | --- | --- |
+| Původní presety | `3t² − 2t³` | 1,5 | 6 |
+| Vejce | `(1 − cos(πt))/2` | π/2 | π²/2 |
+| Diamant | Integrovaná rychlost: smoothstep náběh/doběh, uprostřed konstanta | `1/(1−e)` | `1.5/(e(1−e))`, e = 0,15 |
+
+Pro diamant je na prvním úseku `f(t) = e/(1−e) * (q³ − q⁴/2)`, `q=t/e`; uprostřed `f(t)=(t−e/2)/(1−e)` a na posledním úseku `f(t)=1−f(1−t)`. Funkce i první dvě derivace navazují; úseky není nutné dělit v těchto přechodech, protože globální mez druhé derivace platí i přes ně. Poloha maxima `body.maxRadiusAt` je přístupná v UI jako 30–70 % výšky těla od krčku.
+
+Amplituda je `A * B(z) * W(u)`, kde `B` je původní chráněný náběh/doběh a `u` normalizovaná výška těla. Pro celou výšku `W=1`, pro střed `W=4u(1−u)`, u krčku `W=smoothstep(1−u)`. Všechny váhy zůstávají v [0,1]. Jejich meze `|W'|, |W''|` podle u jsou postupně (0,0), (4,8), (1,5;6).
+
+Twist je `twistDeg * T(u)`: původní plynulý `T=smoothstep(u)`, rovnoměrný `T=u` a tam/zpět `T=4u(1−u)`. Meze derivací podle u jsou (1,5;6), (1;0), (4;8). U tam/zpět je zadaný úhel maximální otočení v polovině těla, na konci je otočení nula. Při nenulové amplitudě se pro středovou obálku a obrácený twist explicitně vzorkuje polovina těla. Při nulové amplitudě volba průběhů bitově nemění síť.
+
+Schéma JSON zůstává ve verzi 1: chybějící `amplitudeProfile` a `twistProfile` se doplní jako `uniform` a `smooth`. Neznámé hodnoty či klíče se dál odmítají. Starší uložené nastavení zachová tvar. Nové volby se ukládají v JSON i místním úložišti a vstupují do worker hashů.
 
 ## Uzavřenost a samoprůniky
 
@@ -24,7 +42,7 @@ error <= Mθθ * Δθ² / 8 + Mθz * Δθ * Δz / 4 + Mzz * Δz² / 8
 
 `M` jsou horní meze norem příslušných druhých derivací v celém intervalu. Odvození: rozvoj v bodě uvnitř trojúhelníku, vážený barycentrickými souřadnicemi vrcholů, ruší členy prvního řádu. Vážený rozptyl každé souřadnice je nejvýše čtvrtina čtverce jejího rozsahu. Smíšený člen je omezen Cauchyho–Schwarzovou nerovností. Mez tedy platí i na hranách a uvnitř trojúhelníků, nikoli jen v generovaných vrcholech.
 
-Na hladkém úseku délky `L` se změnou poloměru `D` jsou `|r0'| <= 1.5 D/L` a `|r0''| <= 6 D/L²`. Pro jediné aktivní rameno obálky délky `b` jsou `|E'| <= 1.5/b`, `|E''| <= 6/b²`. Náběh a doběh se díky `2b <= H` nepřekrývají uvnitř intervalu. Fáze žeber má meze `q1 = k |twist| 1.5/H` a `q2 = k |twist| 6/H²`.
+Na hladkém úseku délky `L` se změnou poloměru `D` jsou `|r0'| <= c1 D/L` a `|r0''| <= c2 D/L²`, kde faktory odpovídají profilu v tabulce. Pro jediné aktivní rameno původní obálky délky `b` jsou `|B'| <= 1.5/b`, `|B''| <= 6/b²`; mimo ramena jsou obě meze nula. Náběh a doběh se díky `2b <= H` nepřekrývají uvnitř intervalu. Pro `E=B*W` platí `|E'| <= |B'|+w1/H` a `|E''| <= |B''|+2|B'|w1/H+w2/H²`. Fáze žeber má meze `q1 = k |twist| t1/H` a `q2 = k |twist| t2/H²`. Meze i kritické výšky jsou společné pro triangulaci a mezivrstvovou analýzu 1.1.0 v `surfaceBounds.ts`.
 
 ```text
 Mθθ <= R + A (k+1)²

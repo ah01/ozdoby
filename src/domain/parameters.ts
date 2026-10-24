@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { bodyRadius, smoothstep } from './shapeMath';
 
 const mm = (min: number, max: number) => z.number().finite().min(min).max(max);
 
 export const ornamentSchema = z.object({
   schemaVersion: z.literal(1),
-  shape: z.enum(['round', 'elongated', 'drop']),
+  shape: z.enum(['round', 'elongated', 'drop', 'egg', 'diamond']),
   body: z.object({
     baseDiameterMm: mm(30, 100), heightMm: mm(35, 140),
     maxRadiusAt: mm(0.3, 0.7), tipRadiusMm: mm(0.8, 3),
@@ -13,6 +14,8 @@ export const ornamentSchema = z.object({
   surface: z.object({
     ribs: z.number().int().min(3).max(24), amplitudeMm: mm(0, 4),
     twistDeg: mm(-180, 180), blendLengthMm: mm(4, 20),
+    amplitudeProfile: z.enum(['uniform', 'middle', 'neck']).default('uniform'),
+    twistProfile: z.enum(['smooth', 'linear', 'reverse']).default('smooth'),
   }).strict(),
 }).strict().superRefine((p, context) => {
   if (p.neck.diameterMm >= p.body.baseDiameterMm)
@@ -24,18 +27,16 @@ export const ornamentSchema = z.object({
   // Analytic lower envelope: r0 >= min(Rn, Rt); |A E cos| <= A.
   // The blend further protects both interfaces, but this conservative test is sufficient.
   if (p.surface.amplitudeMm >= Math.min(p.neck.diameterMm / 2, p.body.tipRadiusMm)) {
-    // On each smoothstep interval, check a rigorous interval bound instead of vertices.
+    // Every profile is monotone between the neck, maximum and tip. Additional
+    // amplitude weights are in [0,1], so the original blend is a safe upper bound.
     // The sharper envelope is implemented without depending on the mesh resolution.
     const h = p.body.heightMm, peak = p.body.maxRadiusAt;
-    const s = (t: number) => { const x = Math.max(0, Math.min(1, t)); return x * x * (3 - 2 * x); };
-    const radius = (u: number) => u <= peak
-      ? p.neck.diameterMm / 2 + (p.body.baseDiameterMm / 2 - p.neck.diameterMm / 2) * s(u / peak)
-      : p.body.baseDiameterMm / 2 + (p.body.tipRadiusMm - p.body.baseDiameterMm / 2) * s((u - peak) / (1 - peak));
+    const radius = (u: number) => bodyRadius(p, u);
     const cuts = [...new Set([0, peak, p.surface.blendLengthMm / h, 1 - p.surface.blendLengthMm / h, 1])].sort((a, b) => a - b);
     let positive = true;
     const check = (lo: number, hi: number, depth: number): void => {
       const minBase = Math.min(radius(lo), radius(hi));
-      const maxEnvelope = s(hi * h / p.surface.blendLengthMm) * s((1 - lo) * h / p.surface.blendLengthMm);
+      const maxEnvelope = smoothstep(hi * h / p.surface.blendLengthMm) * smoothstep((1 - lo) * h / p.surface.blendLengthMm);
       if (minBase - p.surface.amplitudeMm * maxEnvelope > 1e-6) return;
       if (depth === 16) { positive = false; return; }
       const mid = (lo + hi) / 2;

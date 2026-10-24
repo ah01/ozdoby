@@ -2,7 +2,7 @@
   {
     "id": "S01-elongated-smooth",
     "generatorVersion": "0.1.0",
-    "inputHash": "7ccd5cb9",
+    "inputHash": "598391c7",
     "stlSha256": "faf48f033b1b01c006c40834674810c3210172f7c4e1427a78c0887cb343e585",
     "stlBytes": 1996884,
     "validation": {
@@ -76,7 +76,7 @@
   {
     "id": "S02-short-wide-risk",
     "generatorVersion": "0.1.0",
-    "inputHash": "a319224c",
+    "inputHash": "00661688",
     "stlSha256": "cf3050d0c11e1fb730f1b15af156192fcbd5e99fc5fdac2985e571b01196d295",
     "stlBytes": 2099284,
     "validation": {

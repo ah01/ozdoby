@@ -1,13 +1,13 @@
 # Stav implementace
 
-Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.0.0. Základ fáze 0–1 je v commitu `42ed391`, Mantine editor ve `3209ca8` a tisková analýza v `d61e788`. Na přání uživatele editor nově vyplňuje celé okno, s levým posuvným nastavením a spodním souhrnem/exportem; detaily analýzy se otevírají v popoveru.
+Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.1.0. Základ fáze 0–1 je v commitu `42ed391`, Mantine editor ve `3209ca8`, tisková analýza v `d61e788` a vyšší kapacita/detail STL v `cb19fda`. Editor vyplňuje celé okno, s levým posuvným nastavením a spodním souhrnem/exportem; detaily analýzy se otevírají v popoveru. Nově nabízí vejce, zaoblený diamant, polohu maxima a průběhy hloubky žeber a zkroucení.
 
 ## Přehled fází
 
 | Fáze | Implementováno | Automaticky ověřeno | Ověřeno ve sliceru | Ověřeno výtiskem |
 | --- | --- | --- | --- | --- |
 | 0 — geometrie → STL → slicing | Ano | Ano | CLI + rozbor G-code; GUI a snímky čekají | Ne |
-| 1 — projekt a kanonická geometrie | Ano | Ano | Tři presety testované geometricky; S01/S02 v CLI | Ne |
+| 1 — projekt a kanonická geometrie | Ano | Pět presetů a kombinace nových transformací | S01/S02 v CLI, nové tvary geometricky | Ne |
 | 2 — editor a Three.js náhled | Ano; Mantine, formuláře, povrch, 3D, kamera a ukládání | Ano; reducer, render copy, 6 Playwright scénářů včetně 100 úprav | — | Ne |
 | 3 — tisková analýza a mapa rizik | Ano; normály, obousměrné obrysy, zakončení, report a barvy | Analytické fixtures a 3 nové Playwright scénáře | Nenahrazuje slicing | Ne |
 | 4 — dokončení exportního průchodu a MVP | Částečný společný exportní základ | STL/JSON základ ano; úplné E2E a matice ne | S01/S02, nikoli celá matice | Ne |
@@ -19,7 +19,8 @@ Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.0.0. Základ fáze 0�
 ## Provedené změny
 
 - React 19.3.1, TypeScript 7.0.2 (`strict` a `noUncheckedIndexedAccess`), Vite 8.3.5, Vitest 5.0.5, Zod 4.6.7, tsx 4.23.15. Připnuté přímé závislosti a npm lockfile. Engine sjednocen s Vitest: Node `^22.12.0 || ^24.0.0 || >=26.0.0`.
-- Nezávislá doména bez Reactu, DOM a WebGL: schémata, kombinované meze, tiskové vstupy, tři presety, profil, sinusový povrch, ochrana krčku, adaptivní triangulace a uzávěry.
+- Nezávislá doména bez Reactu, DOM a WebGL: schémata, kombinované meze, tiskové vstupy, pět presetů, profil, sinusový povrch, ochrana krčku, adaptivní triangulace a uzávěry.
+- Vejce s kosinovým profilem a diamant s rovnějšími boky a hladkými přechody. Posun maxima 30–70 % výšky od krčku; obálka žeber celá/střed/krček a twist plynulý/rovnoměrný/tam-zpět. Sdílené analytické meze pro síť a analýzu 1.1.0. Starý JSON doplňuje původní průběhy, nové volby přežijí reload a export. Ověření a snímky: `verification/shapes.md`.
 - Kanonická indexovaná topologie, validátor, omezení zdrojů se strukturovanou chybou a matematická mez interpolace v celé buňce. Odůvodnění a numerické tolerance jsou v `geometry.md`.
 - Validovaný float32 binární STL encoder, verzovaný JSON a kanonický hash vstupů. Nezávislé načtení STL pro round-trip a kontrolu stažených souborů.
 - Volitelný detail STL 0,15 / 0,05 / 0,02 mm ve spodním panelu, exportní limit zvýšen z 300 000 na 2 miliony trojúhelníků (náhled 600 000). Paměťově úsporná topologická kontrola v typovaných polích. Detail je zamrazený v exportním požadavku, bez změny náhledu; přesnost se nikdy automaticky nesnižuje. Kapacitní průchod a jeho omezení: `verification/stl-detail.md`.
@@ -37,15 +38,15 @@ Prostředí: Windows, Node **26.12.1**, npm **11.20.0**, PrusaSlicer **2.9.6**, 
 | --- | --- |
 | `npm ci --ignore-scripts --no-audit` | Prošlo, čistá instalace z lockfile. Běžící Vite bylo nutné zastavit kvůli zámku nativní knihovny ve Windows. |
 | `npm run typecheck` | Prošlo. |
-| `npm test` | 47 testů v 5 souborech; navíc všechny tři přesnosti, export nad původním limitem, hrubší alternativa a kontrola detailu v hashi. |
+| `npm test` | 71 testů v 6 souborech prošlo; všechny tři přesnosti, vyšší kapacita, dva nové profily, 18 kombinací průběhů, ochrana rozhraní, procentní editor, původní JSON a nové round-tripy. |
 | `npm run build` | Prošlo včetně produkčního worker chunku. Windows sandbox při prvním pokusu blokoval `realpath`; kontrola mimo sandbox prošla. |
 | `npm run fixtures` | Dva validní solid STL/JSON a manifest, nezávislý STL round-trip. |
 | `scripts/verify-slicer.ps1` | Prošlo načtení i slicing obou fixture a diagnostická kritéria G-code. |
-| `npm run test:e2e` | 12 scénářů prošlo: původní editor, aktuálnost analýzy, bitově stejné STL při změně extruze, selhání analytického workeru, samostatný posuvník a pevná spodní lišta, popover, mobilní vysouvací nastavení a stažení různých detailů STL se zamrazenou volbou. |
+| `npm run test:e2e` | 14 scénářů prošlo: původní editor, aktuálnost analýzy, bitově stejné STL při změně extruze, selhání analytického workeru, samostatný posuvník a pevná spodní lišta, popover, mobilní vysouvací nastavení, různé detaily STL a nové tvary/transformace včetně obnovení, skutečných exportů a mobilního resetu. |
 | Životní cyklus náhledu | Po 100 dokončených změnách zůstává 5 geometrií, 5 materiálů, 5 programů; stejná kamera i target, bez chyb konzole. Aktuální záznam: `verification/workspace-resources.json`; původní fáze 2 je zachovaná. |
-| Snímky aplikace | Historické fáze 1–2 zůstávají uložené. Aktuální UI: `verification/workspace-fullscreen.jpg`, `verification/workspace-analysis-popover.jpg` a `verification/stl-detail.jpg`. |
+| Snímky aplikace | Historické fáze 1–3 zůstávají uložené. Rozšíření UI: `verification/egg-transformations.jpg` a `verification/diamond.jpg`; poslední snímky základního editoru jsou `verification/workspace-fullscreen.jpg`, `verification/workspace-analysis-popover.jpg` a `verification/stl-detail.jpg`. |
 
-Testy pokrývají tři presety, meze, referenční válec (objem, jednotky, orientaci), determinismus, nezměněný krček, nulovou amplitudu, směr twistu, chyby topologie, neplatná čísla/JSON, odmítnutí extrémní deformační obálky nebo limitu zdrojů, STL round-trip, opožděné odpovědi a nezávislé průniky neincidentních trojúhelníků s pozitivními i negativními kontrolami. Vzorky vnitřků/hran trojúhelníků zkroucené žebrované sítě nepřekračují deklarovanou analytickou mez.
+Testy pokrývají pět presetů, meze, referenční válec (objem, jednotky, orientaci), determinismus, nezměněný krček, nulovou amplitudu, směr twistu, chyby topologie, neplatná čísla/JSON, odmítnutí extrémní deformační obálky nebo limitu zdrojů, STL round-trip, opožděné odpovědi a nezávislé průniky neincidentních trojúhelníků s pozitivními i negativními kontrolami. Vzorky vnitřků/hran trojúhelníků zkroucené žebrované sítě nepřekračují deklarovanou analytickou mez, včetně všech 18 kombinací nových tvarů a průběhů.
 
 ## Výsledek experimentální brány
 

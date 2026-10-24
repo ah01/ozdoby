@@ -3,6 +3,7 @@ import type { OrnamentParameters } from '../../domain/parameters';
 export const fields = [
   { id: 'body.baseDiameterMm', label: 'Průměr těla', min: 30, max: 100, step: 1, unit: 'mm', section: 'body' },
   { id: 'body.heightMm', label: 'Výška těla', min: 35, max: 140, step: 1, unit: 'mm', section: 'body' },
+  { id: 'body.maxRadiusAt', label: 'Poloha nejširšího místa', min: 30, max: 70, step: 1, unit: '%', section: 'body', scale: 100 },
   { id: 'neck.diameterMm', label: 'Průměr krčku', min: 10, max: 24, step: 0.5, unit: 'mm', section: 'neck' },
   { id: 'neck.lengthMm', label: 'Délka krčku', min: 5, max: 16, step: 0.5, unit: 'mm', section: 'neck' },
   { id: 'surface.ribs', label: 'Počet žeber', min: 3, max: 24, step: 1, unit: '', section: 'surface', integer: true },
@@ -24,5 +25,6 @@ export function setField(p: OrnamentParameters, id: FieldId, value: number): voi
   (p[group] as unknown as Record<string, number>)[property] = value;
 }
 export function draftsFor(p: OrnamentParameters): DraftValues {
-  return Object.fromEntries(fields.map(field => [field.id, String(getField(p, field.id))])) as DraftValues;
+  return Object.fromEntries(fields.map(field => [field.id, String('scale' in field
+    ? Number((getField(p, field.id) * field.scale).toFixed(10)) : getField(p, field.id))])) as DraftValues;
 }

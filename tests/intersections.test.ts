@@ -3,9 +3,11 @@ import { createPreset } from '../src/domain/presets';
 import { generateMesh, type MeshData } from '../src/geometry/mesh';
 import { hasNonIncidentIntersection } from './helpers/intersections';
 
-it('independently audits full export meshes of the three presets and phase-0 wide fixture', () => {
+it('independently audits full export meshes of all presets and phase-0 wide fixture', () => {
   const wide = createPreset('round'); wide.body.baseDiameterMm = 90; wide.body.heightMm = 35;
-  for (const p of [createPreset(), createPreset('round'), createPreset('drop'), wide])
+  const transformed = createPreset('diamond');
+  Object.assign(transformed.surface, { amplitudeMm: 0.7, ribs: 8, twistDeg: 60, amplitudeProfile: 'middle', twistProfile: 'reverse' });
+  for (const p of [createPreset(), createPreset('round'), createPreset('drop'), createPreset('egg'), createPreset('diamond'), transformed, wide])
     expect(hasNonIncidentIntersection(generateMesh(p))).toBe(false);
 }, 60_000);
 
