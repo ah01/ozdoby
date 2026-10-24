@@ -22,6 +22,17 @@ it('returns structured failures instead of throwing across the worker boundary',
   expect(compute(request)).toMatchObject({ status: 'failed', error: { code: 'INVALID_PARAMETERS' } });
 });
 
+it('binds STL detail to the frozen request identity without changing preview identity', () => {
+  const parameters = createPreset();
+  const standard = requestHash(parameters, 'stl', defaultPrint, 'standard');
+  const coarse = requestHash(parameters, 'stl', defaultPrint, 'coarse');
+  expect(coarse).not.toBe(standard);
+  expect(requestHash(parameters, 'stl')).toBe(standard);
+  expect(requestHash(parameters, 'mesh', defaultPrint, 'coarse')).toBe(requestHash(parameters, 'mesh', defaultPrint, 'fine'));
+  expect(compute({ requestId: 1, revision: 0, kind: 'stl', inputHash: coarse, parameters, stlDetail: 'fine' }))
+    .toMatchObject({ status: 'failed', error: { code: 'INVALID_REQUEST' } });
+});
+
 it('restores the exact parameter and print contract and refuses unknown keys', () => {
   const settings = { schemaVersion: 1 as const, generatorVersion: GENERATOR_VERSION, parameters: createPreset(), print: defaultPrint };
   expect(parseSettings(serializeSettings(settings))).toEqual(settings);

@@ -7,6 +7,7 @@ import { surfacePoint, surfaceRadius } from '../src/geometry/surface';
 import { validateMesh } from '../src/geometry/validate';
 import { encodeStl } from '../src/io/stl';
 import { readStl } from './helpers/read-stl';
+import { EXPORT_TRIANGLE_LIMIT, stlDetails } from '../src/domain/stlDetail';
 
 function cylinder(radius = 10, height = 20, segments = 128): MeshData {
   const positions: number[] = [], indices: number[] = [];
@@ -67,10 +68,10 @@ describe('canonical geometry', () => {
     expect(surfaceRadius(p, phi + 2 * Math.PI / p.surface.ribs, z)).toBeCloseTo(r);
   });
 
-  it('conservatively bounds deviation inside triangles, including diagonal edges', () => {
+  it.each(['coarse', 'standard', 'fine'] as const)('conservatively bounds %s deviation inside triangles, including diagonal edges', detail => {
     const p = createPreset(); p.surface.amplitudeMm = 1; p.surface.twistDeg = 80;
-    const mesh = generateMesh(p), { angles, heights, errorBoundMm } = mesh.sampling;
-    expect(errorBoundMm).toBeLessThanOrEqual(0.05);
+    const mesh = generateMesh(p, 'export', detail), { angles, heights, errorBoundMm } = mesh.sampling;
+    expect(errorBoundMm + 0.0001).toBeLessThanOrEqual(stlDetails[detail].toleranceMm);
     for (let j = 0; j < heights.length - 1; j += 3) for (let i = 0; i < angles; i += 7)
       for (const [s, t] of [[0.5, 0.5], [0.2, 0.3], [0.8, 0.7], [0, 0.5], [0.5, 0]]) {
         const z = heights[j]! + t! * (heights[j + 1]! - heights[j]!);
@@ -137,6 +138,30 @@ describe('canonical geometry', () => {
 });
 
 describe('mesh validation and export', () => {
+  it('exports a previously refused ribbed shape and gives explicit control over file size', () => {
+    const p = createPreset('elongated'); p.body.baseDiameterMm = 50; p.body.heightMm = 101;
+    p.surface.ribs = 17; p.surface.amplitudeMm = 1.8; p.surface.twistDeg = 120;
+    const coarse = generateMesh(p, 'export', 'coarse'), standard = generateMesh(p), fine = generateMesh(p, 'export', 'fine');
+    expect(standard.indices.length / 3).toBeGreaterThan(300_000);
+    expect(coarse.indices.length).toBeLessThan(standard.indices.length);
+    expect(standard.indices.length).toBeLessThan(fine.indices.length);
+    for (const mesh of [coarse, standard, fine]) {
+      expect(mesh.indices.length / 3).toBeLessThanOrEqual(EXPORT_TRIANGLE_LIMIT);
+      expect(validateMesh(mesh).valid).toBe(true);
+    }
+    const decoded = validateMesh(readStl(encodeStl(standard)));
+    expect(decoded.issues).toEqual([]); expect(decoded.bounds.size[2]).toBe(109);
+  }, 20_000);
+
+  it('refuses excessive detail explicitly and allows a coarse export of the same shape', () => {
+    const p = createPreset('elongated'); p.body.baseDiameterMm = 100; p.body.heightMm = 140; p.body.tipRadiusMm = 3;
+    p.surface.ribs = 24; p.surface.amplitudeMm = 4; p.surface.twistDeg = 180; p.surface.blendLengthMm = 20;
+    expect(() => generateMesh(p, 'export', 'fine')).toThrow(expect.objectContaining({ code: 'RESOURCE_LIMIT', message: expect.stringMatching(/hrubší detail STL/) }));
+    const mesh = generateMesh(p, 'export', 'coarse');
+    expect(mesh.sampling.toleranceMm).toBe(0.15); expect(validateMesh(mesh).valid).toBe(true);
+    expect(() => generateMesh(p, 'export', 'unknown' as 'fine')).toThrow(/Neznámá přesnost/);
+  });
+
   it('rejects malformed array lengths without attempting graph traversal', () => {
     expect(validateMesh({ positions: new Float64Array(4), indices: Uint32Array.from([0, 1, 0]), faceRegions: new Uint8Array(1) }).issues.map(i => i.code)).toContain('ARRAY_LENGTH');
   });

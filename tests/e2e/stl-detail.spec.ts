@@ -1,0 +1,43 @@
+import { test, expect } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { readStl } from '../helpers/read-stl';
+import { validateMesh } from '../../src/geometry/validate';
+
+test('STL detail changes the downloaded mesh, preserves the preview, and freezes at export start', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await page.getByLabel('Průměr těla', { exact: true }).fill('50');
+  await page.getByLabel('Výška těla', { exact: true }).fill('101');
+  await page.getByLabel('Počet žeber', { exact: true }).fill('17');
+  await page.getByLabel('Amplituda žeber', { exact: true }).fill('1,8');
+  await page.getByLabel('Celkové zkroucení', { exact: true }).fill('120');
+  await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-state', 'ready');
+  const revision = await page.getByTestId('geometry-status').getAttribute('data-revision');
+  const choose = async (label: string) => {
+    await page.getByRole('button', { name: 'Nastavení detailu STL', exact: true }).click();
+    await page.getByRole('combobox', { name: 'Přesnost STL', exact: true }).click();
+    await page.getByRole('option', { name: label, exact: true }).click();
+    await page.keyboard.press('Escape');
+  };
+  await choose('Hrubší · 0,15 mm');
+  const firstPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true }).click();
+  await choose('Jemné · 0,02 mm');
+  const firstPath = testInfo.outputPath('coarse.stl'); await (await firstPromise).saveAs(firstPath);
+  const coarseBytes = new Uint8Array(await readFile(firstPath));
+  const coarseCount = new DataView(coarseBytes.buffer).getUint32(80, true);
+  expect(coarseCount).toBe(88_128);
+  const secondPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true }).click();
+  const secondPath = testInfo.outputPath('fine.stl'); await (await secondPromise).saveAs(secondPath);
+  const fineBytes = new Uint8Array(await readFile(secondPath));
+  const fineCount = new DataView(fineBytes.buffer).getUint32(80, true);
+  expect(fineCount).toBeGreaterThan(300_000); expect(fineCount).toBeGreaterThan(coarseCount);
+  expect(fineBytes.byteLength).toBe(84 + fineCount * 50);
+  const validation = validateMesh(readStl(fineBytes.buffer));
+  expect(validation.issues).toEqual([]); expect(validation.bounds.size[2]).toBe(109);
+  await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-revision', revision!);
+  await expect(page.getByText(/přesnost 0,02 mm/)).toBeVisible();
+  await page.getByRole('button', { name: 'Nastavení detailu STL', exact: true }).click();
+  await expect(page.locator('.stl-detail-popover')).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: testInfo.outputPath('stl-detail.jpg') });
+});

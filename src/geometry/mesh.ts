@@ -1,5 +1,6 @@
 import { ornamentSchema, type OrnamentParameters } from '../domain/parameters';
 import { surfacePoint } from './surface';
+import { defaultStlDetail, EXPORT_TRIANGLE_LIMIT, PREVIEW_TRIANGLE_LIMIT, stlDetails, type StlDetail } from '../domain/stlDetail';
 
 export const FaceRegion = { neck: 0, body: 1, baseCap: 2, tipCap: 3 } as const;
 export interface MeshData {
@@ -38,15 +39,16 @@ function derivativeBounds(p: OrnamentParameters, lo: number, hi: number): [numbe
     baseSecond + a * (e2 + 2 * e1 * phase1 + phase2 + phase1 * phase1)];
 }
 
-export function generateMesh(input: OrnamentParameters, quality: 'preview' | 'export' = 'export'): MeshResult {
+export function generateMesh(input: OrnamentParameters, quality: 'preview' | 'export' = 'export', detail: StlDetail = defaultStlDetail): MeshResult {
   const parsed = ornamentSchema.safeParse(input);
   if (!parsed.success) throw new GeometryError('INVALID_PARAMETERS', parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('; '));
   const p = parsed.data, h = p.body.heightMm, n = p.neck.lengthMm;
-  const toleranceMm = quality === 'export' ? 0.05 : 0.2;
+  if (!Object.hasOwn(stlDetails, detail)) throw new GeometryError('INVALID_DETAIL', 'Neznámá přesnost STL.');
+  const toleranceMm = quality === 'export' ? stlDetails[detail].toleranceMm : 0.2;
   // Maximum model coordinate is 156 mm. Reserve 0.0001 mm for float32 STL
   // quantization (less than 0.000014 mm in Euclidean distance at this scale).
   const interpolationBudget = toleranceMm - 0.0001;
-  const triangleLimit = 300_000;
+  const triangleLimit = quality === 'export' ? EXPORT_TRIANGLE_LIMIT : PREVIEW_TRIANGLE_LIMIT;
   let angles = Math.max(quality === 'export' ? 256 : 128, 16 * p.surface.ribs);
   angles = Math.ceil(angles / 4) * 4;
   const maxAngular = p.body.baseDiameterMm / 2 + p.surface.amplitudeMm * (p.surface.ribs + 1) ** 2;
@@ -62,7 +64,7 @@ export function generateMesh(input: OrnamentParameters, quality: 'preview' | 'ex
     if (bound <= interpolationBudget) {
       heights.push(hi); errorBoundMm = Math.max(errorBoundMm, bound);
       if (2 * angles * heights.length > triangleLimit)
-        throw new GeometryError('RESOURCE_LIMIT', 'Požadovaná přesnost překračuje limit 300 000 trojúhelníků. Snižte amplitudu, počet žeber či zkroucení.');
+        throw new GeometryError('RESOURCE_LIMIT', `Požadovaná přesnost překračuje limit ${triangleLimit.toLocaleString('cs-CZ')} trojúhelníků. ${quality === 'export' ? 'Zvolte hrubší detail STL, nebo snižte amplitudu, počet žeber či zkroucení.' : 'Snižte amplitudu, počet žeber či zkroucení. STL lze zkusit stáhnout s hrubším detailem.'}`);
       return;
     }
     if (depth >= 24) throw new GeometryError('PRECISION_LIMIT', 'Nelze dosáhnout požadované přesnosti triangulace.');

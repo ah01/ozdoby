@@ -9,9 +9,9 @@ import { defaultPrint, printSchema, validateBottom } from '../domain/parameters'
 export function compute(request: GeometryRequest): GeometryResponse {
   const identity = { requestId: request.requestId, revision: request.revision, kind: request.kind, inputHash: request.inputHash };
   try {
-    if (!['mesh', 'stl'].includes(request.kind) || request.inputHash !== requestHash(request.parameters, request.kind, request.print))
+    if (!['mesh', 'stl'].includes(request.kind) || request.inputHash !== requestHash(request.parameters, request.kind, request.print, request.stlDetail))
       throw new GeometryError('INVALID_REQUEST', 'Nesouhlasí druh úlohy nebo hash vstupů.');
-    const mesh = generateMesh(request.parameters, request.kind === 'stl' ? 'export' : 'preview');
+    const mesh = generateMesh(request.parameters, request.kind === 'stl' ? 'export' : 'preview', request.stlDetail);
     const validation = validateMesh(mesh);
     if (!validation.valid) throw new GeometryError('INVALID_MESH', validation.issues.map(i => i.message).join(' '));
     const print = request.kind === 'stl' ? printSchema.parse(request.print ?? defaultPrint) : defaultPrint;

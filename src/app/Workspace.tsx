@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState, type Dispatch } from 'react';
-import { Alert, Button, Drawer, Group, Paper, Popover, Text, Title } from '@mantine/core';
+import { Alert, Button, Drawer, Group, Paper, Popover, Select, Stack, Text, Title } from '@mantine/core';
 import { useMediaQuery } from '@mantine/hooks';
 import type { EditorAction, EditorState } from './editorState';
 import type { useGeometry } from './useGeometry';
@@ -9,6 +9,7 @@ import { download, modelName, type useExport } from '../features/export/useExpor
 import { AnalysisPanel, type FocusRegion } from '../features/printability/AnalysisPanel';
 import { riskLabels } from '../analysis/types';
 import { GENERATOR_VERSION, serializeSettings } from '../io/preset';
+import { stlDetails, type StlDetail } from '../domain/stlDetail';
 
 const Preview = lazy(() => import('../features/preview/Preview'));
 const number = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
@@ -75,15 +76,25 @@ export function Workspace({ state, dispatch, geometry, analysis, exporter, valid
         </Popover>
       </div>
 
-      <Group className="bottom-downloads" gap="sm" wrap="nowrap">
+      <Group className="bottom-downloads" gap="xs" wrap="wrap" justify="flex-end">
         {exporter.exportRevision !== null && <Button variant="subtle" color="gray" size="xs" onClick={exporter.cancel}>Zrušit export</Button>}
         <Button variant="default" disabled={!valid} aria-label="Uložit parametry JSON"
           onClick={() => download(serializeSettings({ schemaVersion: 1, generatorVersion: GENERATOR_VERSION, parameters: state.parameters, print: state.print }), `${modelName(state.parameters)}.json`, 'application/json')}>JSON</Button>
-        <Button disabled={!valid || !current || exporter.exportRevision !== null} onClick={() => exporter.start(state.parameters, state.print, state.revision)}>
-          {exporter.exportRevision !== null ? 'Připravuji jemné STL…' : 'Stáhnout STL ↓'}</Button>
+        <Popover position="top" withArrow shadow="md" width={300} withinPortal>
+          <Popover.Target><Button variant="default" size="compact-sm" aria-label="Nastavení detailu STL">Detail · {number(stlDetails[exporter.detail].toleranceMm)} mm</Button></Popover.Target>
+          <Popover.Dropdown className="stl-detail-popover"><Stack gap="sm">
+            <Select label="Přesnost STL" value={exporter.detail} allowDeselect={false} comboboxProps={{ withinPortal: false }}
+              data={Object.entries(stlDetails).map(([value, option]) => ({ value, label: option.label }))}
+              onChange={value => { if (value && Object.hasOwn(stlDetails, value)) exporter.setDetail(value as StlDetail); }} />
+            <Text size="xs" c="dimmed">Maximální odchylka sítě od povrchu. Hrubší STL má méně trojúhelníků a menší soubor; jemné lépe zachová žebra. Limit je 2 miliony trojúhelníků (STL až 100 MB). Náhled se nemění.</Text>
+            <Text size="xs" c="dimmed">Volba platí pro příští export. Probíhající export používá nastavení z okamžiku spuštění.</Text>
+          </Stack></Popover.Dropdown>
+        </Popover>
+        <Button disabled={!valid || exporter.exportRevision !== null} onClick={() => exporter.start(state.parameters, state.print, state.revision)}>
+          {exporter.exportRevision !== null ? 'Připravuji STL…' : 'Stáhnout STL ↓'}</Button>
       </Group>
-      {(geometry.status === 'failed' || exporter.error || exporter.notice) && <Text size="xs" className="bottom-notice" c={exporter.error || geometry.status === 'failed' ? 'red' : 'dimmed'} role={exporter.error ? 'alert' : 'status'}>
-        {exporter.error || (geometry.status === 'failed' ? geometry.error : exporter.notice)}
+      {(geometry.status === 'failed' || exporter.error || exporter.notice) && <Text size="xs" className="bottom-notice" c={exporter.error || (geometry.status === 'failed' && !exporter.notice) ? 'red' : 'dimmed'} role={exporter.error ? 'alert' : 'status'}>
+        {exporter.error || exporter.notice || geometry.error}
       </Text>}
     </section>
 

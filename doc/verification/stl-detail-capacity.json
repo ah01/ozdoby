@@ -1,0 +1,134 @@
+{
+  "measuredAt": "2026-10-24T11:56:36.625Z",
+  "node": "v26.12.1",
+  "platform": "win32",
+  "methodology": "Single compute() calls including topology, float32 STL validation/encoding and final analysis. Not warmed p95; peak RSS is cumulative for this Node process, not browser memory.",
+  "exportTriangleLimit": 2000000,
+  "maxRssMiB": 415.80078125,
+  "probes": [
+    {
+      "name": "ribbed",
+      "parameters": {
+        "schemaVersion": 1,
+        "shape": "elongated",
+        "body": {
+          "baseDiameterMm": 50,
+          "heightMm": 101,
+          "maxRadiusAt": 0.5,
+          "tipRadiusMm": 1.2
+        },
+        "neck": {
+          "diameterMm": 14,
+          "lengthMm": 8
+        },
+        "surface": {
+          "ribs": 17,
+          "amplitudeMm": 1.8,
+          "twistDeg": 120,
+          "blendLengthMm": 8
+        }
+      },
+      "detail": "coarse",
+      "toleranceMm": 0.15,
+      "errorBoundMm": 0.14470386268200253,
+      "triangles": 88128,
+      "stlBytes": 4406484,
+      "valid": true,
+      "durationMs": 1211.4863,
+      "analysisStatus": "ready"
+    },
+    {
+      "name": "ribbed",
+      "parameters": {
+        "schemaVersion": 1,
+        "shape": "elongated",
+        "body": {
+          "baseDiameterMm": 50,
+          "heightMm": 101,
+          "maxRadiusAt": 0.5,
+          "tipRadiusMm": 1.2
+        },
+        "neck": {
+          "diameterMm": 14,
+          "lengthMm": 8
+        },
+        "surface": {
+          "ribs": 17,
+          "amplitudeMm": 1.8,
+          "twistDeg": 120,
+          "blendLengthMm": 8
+        }
+      },
+      "detail": "standard",
+      "toleranceMm": 0.05,
+      "errorBoundMm": 0.03617596567050063,
+      "triangles": 350336,
+      "stlBytes": 17516884,
+      "valid": true,
+      "durationMs": 1900.6262,
+      "analysisStatus": "ready"
+    },
+    {
+      "name": "ribbed",
+      "parameters": {
+        "schemaVersion": 1,
+        "shape": "elongated",
+        "body": {
+          "baseDiameterMm": 50,
+          "heightMm": 101,
+          "maxRadiusAt": 0.5,
+          "tipRadiusMm": 1.2
+        },
+        "neck": {
+          "diameterMm": 14,
+          "lengthMm": 8
+        },
+        "surface": {
+          "ribs": 17,
+          "amplitudeMm": 1.8,
+          "twistDeg": 120,
+          "blendLengthMm": 8
+        }
+      },
+      "detail": "fine",
+      "toleranceMm": 0.02,
+      "errorBoundMm": 0.019769150378758416,
+      "triangles": 770304,
+      "stlBytes": 38515284,
+      "valid": true,
+      "durationMs": 2659.8992000000003,
+      "analysisStatus": "ready"
+    },
+    {
+      "name": "near-limit",
+      "parameters": {
+        "schemaVersion": 1,
+        "shape": "elongated",
+        "body": {
+          "baseDiameterMm": 100,
+          "heightMm": 140,
+          "maxRadiusAt": 0.5,
+          "tipRadiusMm": 3
+        },
+        "neck": {
+          "diameterMm": 14,
+          "lengthMm": 8
+        },
+        "surface": {
+          "ribs": 24,
+          "amplitudeMm": 3,
+          "twistDeg": 180,
+          "blendLengthMm": 20
+        }
+      },
+      "detail": "standard",
+      "toleranceMm": 0.05,
+      "errorBoundMm": 0.045196189994785696,
+      "triangles": 1969152,
+      "stlBytes": 98457684,
+      "valid": true,
+      "durationMs": 5623.674800000001,
+      "analysisStatus": "failed"
+    }
+  ]
+}

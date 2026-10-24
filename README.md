@@ -4,6 +4,8 @@ Lokální generátor parametrických vánočních ozdob pro spiral vase tisk. Re
 
 Implementované jsou technické výstupy fáze 0 a fáze 1–3: tři presety, rozměry, krček, žebra, twist, 3D náhled, ukládání, solid STL/JSON a geometrická tisková analýza s mapou rizik. Editor vyplňuje celé okno, levé nastavení má vlastní posuvník, rozměry/hodnocení/export zůstávají dole a podrobné výsledky jsou v popoveru. Na malé obrazovce se nastavení otevírá zleva jako vysouvací panel. Kompletní slicerová matice, import JSON v UI a objímka přijdou v dalších fázích; MVP ani fyzický výtisk zatím nejsou ověřeny. Podrobnosti a otevřené brány: [stav implementace](doc/IMPLEMENTATION_STATUS.md).
 
+Vedle stažení je volba **Detail**: hrubší STL (odchylka do 0,15 mm), standardní (výchozích 0,05 mm) a jemné (0,02 mm). Hrubší síť usnadňuje export složitých žeber a zmenšuje soubor; náhled se při změně detailu nepřepočítává. Export dovoluje až 2 miliony trojúhelníků (přibližně 100 MB), náhled 600 tisíc. Přesnost se nikdy nesnižuje automaticky. Volba detailu platí pro příští export a po obnovení stránky se vrací na standard. Kapacitní měření a omezení: [detail STL](doc/verification/stl-detail.md).
+
 ## Spuštění
 
 Node.js `^22.12.0 || ^24.0.0 || >=26.0.0`, npm a moderní desktopový prohlížeč. Ověřeno s Node 26.12.1 a npm 11.20.0 na Windows.
@@ -28,6 +30,8 @@ npm run check
 npm run test:e2e
 # Referenční souhrny analýzy (S01, S02, žebra/twist, různé vrstvy):
 npx --no-install tsx scripts/analyse-fixtures.ts
+# Kapacitní průchod exportu až k 2 milionům trojúhelníků:
+node --expose-gc --import tsx scripts/verify-stl-detail.ts
 ```
 
 Před novým `npm ci` zastavte běžící Vite; Windows jinak nemůže vyměnit otevřenou nativní knihovnu Rolldown. Některé sandboxy Windows omezují `realpath` workeru; produkční sestavení bylo ověřeno mimo takový sandbox.

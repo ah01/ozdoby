@@ -1,6 +1,6 @@
 # Geometrický kontrakt a numerika
 
-Generátor 0.1.0 používá profil a sinusové žebrování z implementačního plánu. Rozměry jsou v mm, krček leží na Z = 0 až `neck.lengthMm`. Tři presety jsou parametry téže profilové funkce, ne samostatné sítě. Požadovaná přesnost exportu je 0,05 mm; náhledu 0,2 mm.
+Generátor 0.1.0 používá profil a sinusové žebrování z implementačního plánu. Rozměry jsou v mm, krček leží na Z = 0 až `neck.lengthMm`. Tři presety jsou parametry téže profilové funkce, ne samostatné sítě. Výchozí přesnost exportu je 0,05 mm; náhledu 0,2 mm. Na přání uživatele lze STL výslovně přepnout na hrubší 0,15 mm nebo jemné 0,02 mm. Jde o maximální prostorovou odchylku triangulace, nikoli výšku tiskové vrstvy; hrubší volba ustupuje od původního standardního požadavku 0,05 mm.
 
 ## Uzavřenost a samoprůniky
 
@@ -32,7 +32,9 @@ Mθz <= |r0'| + A (k+1) (|E'| + q1)
 Mzz <= |r0''| + A (|E''| + 2 |E'| q1 + q2 + q1²)
 ```
 
-Nesplnění meze půlí interval Z. Počet trojúhelníků je omezen na 300 000; překročení vrací `RESOURCE_LIMIT`, bez zhoršení přesnosti. Část kombinací z rozsahů proto může být odmítnuta, jak připouští plán. Pro float32 je rezervováno dalších 0,0001 mm uvnitř cílové tolerance. Pro maximální souřadnici 156 mm je velikost kvantizačního posunu menší než 0,000014 mm.
+Nesplnění meze půlí interval Z. Na přání uživatele je původní limit 300 000 zvýšen na 2 000 000 trojúhelníků pro STL (binární soubor nejvýše 100 000 084 bajtů) a 600 000 pro náhled. Překročení vrací `RESOURCE_LIMIT` s doporučením hrubšího STL, bez automatického zhoršení přesnosti; odmítnutí probíhá už při plánování výšek před alokací sítě. Část kombinací z rozsahů proto může být nadále odmítnuta. Pro float32 je rezervováno dalších 0,0001 mm uvnitř každé cílové tolerance. Pro maximální souřadnici 156 mm je velikost kvantizačního posunu menší než 0,000014 mm.
+
+Topologická kontrola nyní používá seřazené směrované hrany ve `Float64Array`, union-find a tabulku ploch v typovaných polích s porovnáním celých trojic při kolizích. Nevytváří objekt pro každou hranu ani řetězec pro každou plochu; zachovává kontroly duplicit, manifold hran a orientace. Pro nejvýše přibližně milion vrcholů jsou celočíselné klíče hran přesně reprezentovatelné.
 
 Automatický test porovnává interpolaci obou trojúhelníků s přímým vyhodnocením povrchu na úhlových a výškových průřezech, vnitřních bodech, obvodových hranách i diagonálách žebrovaného zkrouceného modelu. Pro nulovou amplitudu se fáze vůbec nevyhodnocuje; twist tedy bitově nemění síť.
 
@@ -42,4 +44,4 @@ Topologická numerika používá měřítko `s = max(1 mm, rozměry bbox)`. Plo�
 
 Encoder před zápisem převede souřadnice přes `Math.fround`, znovu validuje geometrii a ověří změnu každého extrému bbox do 0,001 mm. Výstup obsahuje jen tělo, normály ploch, mm souřadnice a nulové atributy. Nezávislý parser v testech a skriptech svařuje přesně stejné float32 souřadnice; nezávisí na indexech generátoru. Porovnává se uzavřenost, objem a bbox po round-tripu.
 
-Worker vytváří nová pole pro každou úlohu a předává jejich vlastnictví UI. Starší odpověď je identifikována request ID, revizí, druhem úlohy a hashem vstupů. Změna presetu ukončí předchozí worker, takže se nebuduje fronta synchronních úloh. Export používá zamrazenou kopii parametrů a samostatný worker; název souboru vzniká z této kopie.
+Worker vytváří nová pole pro každou úlohu a předává jejich vlastnictví UI. Starší odpověď je identifikována request ID, revizí, druhem úlohy a hashem vstupů. Změna presetu ukončí předchozí worker, takže se nebuduje fronta synchronních úloh. Export používá zamrazenou kopii parametrů, tiskových předpokladů i detailu STL a samostatný worker; název souboru vzniká z této kopie. Detail je součástí exportního hashe; nemění náhledový hash ani nastavení modelu v JSON. V UI platí pro příští export a při obnovení stránky se vrátí na standardní hodnotu. Ověřený export lze spustit i při selhání náhledu; validitu znovu rozhodne exportní worker.

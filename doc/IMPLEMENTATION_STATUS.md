@@ -22,6 +22,7 @@ Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.0.0. Základ fáze 0�
 - Nezávislá doména bez Reactu, DOM a WebGL: schémata, kombinované meze, tiskové vstupy, tři presety, profil, sinusový povrch, ochrana krčku, adaptivní triangulace a uzávěry.
 - Kanonická indexovaná topologie, validátor, omezení zdrojů se strukturovanou chybou a matematická mez interpolace v celé buňce. Odůvodnění a numerické tolerance jsou v `geometry.md`.
 - Validovaný float32 binární STL encoder, verzovaný JSON a kanonický hash vstupů. Nezávislé načtení STL pro round-trip a kontrolu stažených souborů.
+- Volitelný detail STL 0,15 / 0,05 / 0,02 mm ve spodním panelu, exportní limit zvýšen z 300 000 na 2 miliony trojúhelníků (náhled 600 000). Paměťově úsporná topologická kontrola v typovaných polích. Detail je zamrazený v exportním požadavku, bez změny náhledu; přesnost se nikdy automaticky nesnižuje. Kapacitní průchod a jeho omezení: `verification/stl-detail.md`.
 - Worker protokol s request ID, revizí, druhem úlohy, hashem a strukturovanými chybami; předávání vlastnictví nových bufferů. Ukončení workeru ruší zastaralou práci; export používá samostatný worker a zamrazené parametry.
 - Mantine 9.7.3 pro společné téma, číselné vstupy, slidery, panely, upozornění, tlačítka a nápovědu. Platnost parametrů dál rozhoduje společné doménové Zod schéma. Nevalidní koncept formuláře se nepropíše do geometrie ani úložiště.
 - Three.js 0.186.1 přes R3F 9.8.2 a drei 10.7.9: Z-up náhled, orbit/pan/zoom, podložka, osy, rozměrová kóta, odlišený krček, tiskový/zavěšený pohled a explicitní reset. Změna parametrů zachovává kameru.
@@ -36,13 +37,13 @@ Prostředí: Windows, Node **26.12.1**, npm **11.20.0**, PrusaSlicer **2.9.6**, 
 | --- | --- |
 | `npm ci --ignore-scripts --no-audit` | Prošlo, čistá instalace z lockfile. Běžící Vite bylo nutné zastavit kvůli zámku nativní knihovny ve Windows. |
 | `npm run typecheck` | Prošlo. |
-| `npm test` | 42 testů v 5 souborech prošlo; navíc analytické kužely, segmentové BVH, mezivrstvy a export s nedokončenou analýzou. |
+| `npm test` | 47 testů v 5 souborech; navíc všechny tři přesnosti, export nad původním limitem, hrubší alternativa a kontrola detailu v hashi. |
 | `npm run build` | Prošlo včetně produkčního worker chunku. Windows sandbox při prvním pokusu blokoval `realpath`; kontrola mimo sandbox prošla. |
 | `npm run fixtures` | Dva validní solid STL/JSON a manifest, nezávislý STL round-trip. |
 | `scripts/verify-slicer.ps1` | Prošlo načtení i slicing obou fixture a diagnostická kritéria G-code. |
-| `npm run test:e2e` | 11 scénářů: původní editor, aktuálnost analýzy, bitově stejné STL při změně extruze, selhání analytického workeru, samostatný posuvník a pevná spodní lišta, popover a mobilní vysouvací nastavení. |
+| `npm run test:e2e` | 12 scénářů prošlo: původní editor, aktuálnost analýzy, bitově stejné STL při změně extruze, selhání analytického workeru, samostatný posuvník a pevná spodní lišta, popover, mobilní vysouvací nastavení a stažení různých detailů STL se zamrazenou volbou. |
 | Životní cyklus náhledu | Po 100 dokončených změnách zůstává 5 geometrií, 5 materiálů, 5 programů; stejná kamera i target, bez chyb konzole. Aktuální záznam: `verification/workspace-resources.json`; původní fáze 2 je zachovaná. |
-| Snímky aplikace | Historické fáze 1–2 zůstávají uložené. Aktuální UI: `verification/workspace-fullscreen.jpg` a `verification/workspace-analysis-popover.jpg`. |
+| Snímky aplikace | Historické fáze 1–2 zůstávají uložené. Aktuální UI: `verification/workspace-fullscreen.jpg`, `verification/workspace-analysis-popover.jpg` a `verification/stl-detail.jpg`. |
 
 Testy pokrývají tři presety, meze, referenční válec (objem, jednotky, orientaci), determinismus, nezměněný krček, nulovou amplitudu, směr twistu, chyby topologie, neplatná čísla/JSON, odmítnutí extrémní deformační obálky nebo limitu zdrojů, STL round-trip, opožděné odpovědi a nezávislé průniky neincidentních trojúhelníků s pozitivními i negativními kontrolami. Vzorky vnitřků/hran trojúhelníků zkroucené žebrované sítě nepřekračují deklarovanou analytickou mez.
 

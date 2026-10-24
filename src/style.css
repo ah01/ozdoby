@@ -41,7 +41,7 @@ body { background: #f6f5ef; color: #183c35; }
 .analysis-summary-text > span { display: block; }
 .analysis-summary-text > span:first-child, .analysis-summary-metrics { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .analysis-summary-metrics { margin-top: 3px; font-size: 11px; font-weight: 400; }
-.bottom-downloads { justify-self: end; }
+.bottom-downloads { justify-self: end; min-width: 0; max-width: 100%; }
 .bottom-notice { grid-column: 1 / -1; line-height: 1.4; }
 .analysis-popover { width: min(560px, calc(100vw - 24px)) !important; max-height: min(75dvh, 740px); overflow-y: auto; overscroll-behavior: contain; padding: 0; }
 .analysis-popover-heading { position: sticky; top: 0; z-index: 1; padding: 14px 18px; background: #fffefa; border-bottom: 1px solid #e0e5dc; }
@@ -59,7 +59,8 @@ body { background: #f6f5ef; color: #183c35; }
 @media (max-width: 1100px) {
   .workspace-header .workspace-title { display: none; }
   .workspace-body { grid-template-columns: 285px minmax(0, 1fr); }
-  .workspace-bottom { gap: 10px 14px; padding: 10px 14px; }
+  .workspace-bottom { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: 10px 14px; padding: 10px 14px; }
+  .bottom-downloads { grid-column: 1 / -1; }
 }
 @media (max-width: 760px) {
   .workspace-header { min-height: 56px; padding: 8px 12px; }
