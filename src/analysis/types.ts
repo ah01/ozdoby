@@ -1,6 +1,6 @@
 import type { PrintAssumptions } from '../domain/parameters';
 
-export const ANALYSIS_VERSION = '1.1.0';
+export const ANALYSIS_VERSION = '1.4.0';
 export type RiskLevel = 'low' | 'warning' | 'high';
 export type RiskCode = 0 | 1 | 2;
 export interface AnalysisMessage {
@@ -37,6 +37,6 @@ export interface AnalysisOptions {
   smallTipWidthMultiples: number; highOverhangExtraDeg: number; detailWidthMultiples: number;
 }
 export const defaultAnalysisOptions: AnalysisOptions = {
-  contourToleranceMm: 0.005, maxDistanceQueries: 3_000_000, maxSubdivisionsPerLayer: 32,
+  contourToleranceMm: 0.005, maxDistanceQueries: 12_000_000, maxSubdivisionsPerLayer: 32,
   smallTipWidthMultiples: 6, highOverhangExtraDeg: 15, detailWidthMultiples: 1,
 };

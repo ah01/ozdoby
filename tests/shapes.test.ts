@@ -22,7 +22,7 @@ it.each(['egg', 'diamond'] as const)('%s has a distinct monotone profile and a v
   const result = validateMesh(readStl(encodeStl(generateMesh(p))));
   expect(result.issues).toEqual([]); expect(result.bounds.size).toEqual([56, 56, n + h]);
   const report = analyse(p, defaultPrint, generateMesh(p, 'preview'));
-  expect(report.algorithmVersion).toBe('1.1.0'); expect(report.layers.bands.length).toBeGreaterThan(100);
+  expect(report.algorithmVersion).toBe('1.4.0'); expect(report.layers.bands.length).toBeGreaterThan(100);
 });
 
 it('preserves the straight middle of diamond sides with rounded shoulder and maximum', () => {
@@ -84,7 +84,7 @@ it.each(combinations)('$shape/$amplitudeProfile/$twistProfile stays within its i
 
 it('loads legacy settings with neutral defaults and round-trips new choices strictly', () => {
   const legacy = JSON.parse(JSON.stringify(createPreset()));
-  delete legacy.surface.amplitudeProfile; delete legacy.surface.twistProfile;
+  for (const id of ['amplitudeProfile', 'twistProfile', 'ribShape', 'ribRotationDeg', 'waveAmplitudeMm', 'waveCount', 'waveShiftPercent']) delete legacy.surface[id];
   const restored = parseSettings(JSON.stringify({ schemaVersion: 1, generatorVersion: '0.1.0', parameters: legacy, print: defaultPrint }));
   expect(restored.parameters).toEqual(createPreset());
   expect(encodeStl(generateMesh(restored.parameters))).toEqual(encodeStl(generateMesh(createPreset())));

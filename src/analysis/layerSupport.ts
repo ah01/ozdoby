@@ -1,29 +1,36 @@
 import type { OrnamentParameters, PrintAssumptions } from '../domain/parameters';
 import { GeometryError } from '../geometry/mesh';
-import { surfaceAmplitude, surfaceRadius, surfaceTwist } from '../geometry/surface';
-import { derivativeBounds, surfaceKnots } from '../geometry/surfaceBounds';
+import { ribPhase, surfaceAmplitude, surfaceRadius } from '../geometry/surface';
+import { angularSecondBound, derivativeBounds, surfaceKnots } from '../geometry/surfaceBounds';
+import { ribDerivatives } from '../domain/shapeMath';
+import { localDerivativeBounds } from '../geometry/localBounds';
 import { SegmentIndex } from './segmentIndex';
 import { defaultAnalysisOptions, type AnalysisOptions, type LayerBand, type LayerReport, type RiskCode } from './types';
 
 export interface AnalysisSurface {
   heightMm: number; radius: (theta: number, z: number) => number; circular: boolean;
   angularSecondBound: number; zSecondBound: number; minimumAngles: number; knots: number[];
+  zSecondBoundOn?: (lo: number, hi: number) => number;
   curvatureRadius?: (theta: number, z: number) => number;
 }
 export function ornamentSurface(p: OrnamentParameters): AnalysisSurface {
   const h = p.body.heightMm, n = p.neck.lengthMm;
-  const r = p.body.baseDiameterMm / 2, a = p.surface.amplitudeMm, k = p.surface.ribs;
+  const a = p.surface.amplitudeMm, k = p.surface.ribs;
   const knots = surfaceKnots(p);
   const zSecondBound = Math.max(...knots.slice(1).map((hi, i) => derivativeBounds(p, knots[i]!, hi)[2]));
   return { heightMm: n + h, radius: (theta, z) => surfaceRadius(p, theta, z), circular: a === 0,
-    angularSecondBound: r + a * (k + 1) ** 2,
+    angularSecondBound: angularSecondBound(p),
     zSecondBound,
+    zSecondBoundOn: (lo, hi) => {
+      const cuts = [lo, ...knots.filter(z => z > lo && z < hi), hi];
+      return Math.max(...cuts.slice(1).map((upper, i) => localDerivativeBounds(p, cuts[i]!, upper)[2]));
+    },
     minimumAngles: Math.max(128, 16 * k), knots,
     curvatureRadius: a === 0 ? undefined : (theta, z) => {
       const amplitude = surfaceAmplitude(p, z);
       if (amplitude < 1e-8) return Infinity;
-      const phase = k * (theta - surfaceTwist(p, z));
-      const radius = surfaceRadius(p, theta, z), first = -amplitude * k * Math.sin(phase), second = -amplitude * k * k * Math.cos(phase);
+      const [waveFirst, waveSecond] = ribDerivatives(p, ribPhase(p, theta, z));
+      const radius = surfaceRadius(p, theta, z), first = amplitude * k * waveFirst, second = amplitude * k * k * waveSecond;
       const curvature = Math.abs(radius ** 2 + 2 * first ** 2 - radius * second) / (radius ** 2 + first ** 2) ** 1.5;
       return curvature > 1e-12 ? 1 / curvature : Infinity;
     },
@@ -35,8 +42,6 @@ export function analyseLayers(surface: AnalysisSurface, print: PrintAssumptions,
   const tolerance = Math.min(options.contourToleranceMm, print.extrusionWidthMm * 0.02);
   const angles = surface.circular ? 0 : Math.ceil(Math.max(surface.minimumAngles,
     2 * Math.PI * Math.sqrt(surface.angularSecondBound / (8 * tolerance))) / 4) * 4;
-  const subdivisions = Math.max(2, Math.ceil(print.layerHeightMm * Math.sqrt(surface.zSecondBound / (8 * tolerance))));
-  if (subdivisions > options.maxSubdivisionsPerLayer) throw new GeometryError('ANALYSIS_LIMIT', 'Analýza vyžaduje příliš mnoho mezivrstvových vzorků. Snižte amplitudu nebo zkroucení; validní STL lze stáhnout bez dokončené analýzy.');
   const bottom = print.firstLayerHeightMm + (print.bottomSolidLayers - 1) * print.layerHeightMm;
   const bands: LayerBand[] = [];
   let comparedSections = 0, distanceQueries = 0, minCurvature = Infinity;
@@ -52,6 +57,9 @@ export function analyseLayers(surface: AnalysisSurface, print: PrintAssumptions,
   let lower = angles ? contour(bottom) : null;
   for (let layer = 0; bottom + layer * print.layerHeightMm < surface.heightMm - 1e-9; layer++) {
     const z0 = bottom + layer * print.layerHeightMm, z1 = Math.min(surface.heightMm, bottom + (layer + 1) * print.layerHeightMm);
+    const secondBound = surface.zSecondBoundOn?.(z0, z1) ?? surface.zSecondBound;
+    const subdivisions = Math.max(2, Math.ceil((z1 - z0) * Math.sqrt(secondBound / (8 * tolerance))));
+    if (subdivisions > options.maxSubdivisionsPerLayer) throw new GeometryError('ANALYSIS_LIMIT', 'Analýza vyžaduje příliš mnoho mezivrstvových vzorků. Snižte hloubku žeber či vln, počet vln nebo zkroucení; validní STL lze stáhnout bez dokončené analýzy.');
     const samples = [...new Set([...Array.from({ length: subdivisions }, (_, i) => z0 + (z1 - z0) * (i + 1) / subdivisions),
       ...surface.knots.filter(z => z > z0 && z < z1)])].sort((a, b) => a - b);
     let upperDistanceMm = 0, lowerDistanceMm = 0, expanding = false, contracting = false;
@@ -64,7 +72,7 @@ export function analyseLayers(surface: AnalysisSurface, print: PrintAssumptions,
         expanding ||= delta > 1e-7; contracting ||= delta < -1e-7;
       } else {
         distanceQueries += 2 * angles;
-        if (distanceQueries > options.maxDistanceQueries) throw new GeometryError('ANALYSIS_LIMIT', 'Analýza překročila limit vzorkování. Snižte počet žeber či amplitudu, nebo stáhněte STL bez dokončené analýzy.');
+        if (distanceQueries > options.maxDistanceQueries) throw new GeometryError('ANALYSIS_LIMIT', 'Analýza překročila limit vzorkování. Snižte hloubku či počet žeber a vln nebo zkroucení, nebo stáhněte STL bez dokončené analýzy.');
         const upper = contour(z); lastContour = upper;
         for (let i = 0; i < angles; i++) {
           upperDistanceMm = Math.max(upperDistanceMm, lower!.index.distance(upper.xy[2 * i]!, upper.xy[2 * i + 1]!, i));

@@ -20,7 +20,12 @@
       "twistDeg": 0,
       "blendLengthMm": 8,
       "amplitudeProfile": "uniform",
-      "twistProfile": "smooth"
+      "twistProfile": "smooth",
+      "ribShape": "rounded",
+      "ribRotationDeg": 0,
+      "waveAmplitudeMm": 0,
+      "waveCount": 4,
+      "waveShiftPercent": 0
     }
   },
   "print": {

@@ -1,12 +1,13 @@
 import { Component, useEffect, useMemo, useRef, useState, type ComponentRef, type ReactNode } from 'react';
-import { Alert, Button, Group, SegmentedControl, Text } from '@mantine/core';
+import { Alert, Button, Group, SegmentedControl, Switch, Text } from '@mantine/core';
 import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import type { BufferGeometry, Material, Object3D, PerspectiveCamera } from 'three';
 import type { ReadyGeometry } from '../../app/useGeometry';
 import type { FocusRegion } from '../printability/AnalysisPanel';
 
-interface PreviewProps { result: ReadyGeometry | null; stale: boolean; status: string; riskMap: { key: string; colors: Float32Array } | null; focused: FocusRegion | null }
+interface PreviewProps { result: ReadyGeometry | null; stale: boolean; status: string; riskMap: { key: string; colors: Float32Array } | null; focused: FocusRegion | null;
+  showMap: boolean; onMapChange: (checked: boolean) => void; analysisStatus: string }
 type ViewMode = 'print' | 'hanging';
 export interface PreviewDiagnostics {
   revision: number; geometries: number; materials: number; programs: number;
@@ -99,13 +100,15 @@ function ContextMonitor({ onLost }: { onLost: () => void }) {
   return null;
 }
 
-export default function Preview({ result, stale, status, riskMap, focused }: PreviewProps) {
+export default function Preview({ result, stale, status, riskMap, focused, showMap, onMapChange, analysisStatus }: PreviewProps) {
   const [mode, setMode] = useState<ViewMode>('print'), [reset, setReset] = useState(0);
   const [lost, setLost] = useState(false), [attempt, setAttempt] = useState(0);
   const retry = () => { setLost(false); setAttempt(a => a + 1); };
   const height = result?.validation.bounds.size[2] ?? 96, width = result?.validation.bounds.size[0] ?? 56;
   return <section className="preview-panel" aria-label="3D náhled baňky" data-testid="preview" data-rendered-revision={result?.revision ?? -1} data-risk-map={riskMap?.key ?? 'off'}>
-    <div className="preview-toolbar"><Text className="eyebrow" mb="0">02 / 3D NÁHLED</Text><Button size="compact-xs" variant="subtle" onClick={() => setReset(value => value + 1)}>Reset kamery ↺</Button></div>
+    <div className="preview-toolbar"><Text className="eyebrow" mb="0">02 / 3D NÁHLED</Text><Group gap="sm" wrap="nowrap">
+      <Switch label="Mapa rizik" size="xs" checked={showMap} onChange={event => onMapChange(event.currentTarget.checked)} />
+      <Button size="compact-xs" variant="subtle" onClick={() => setReset(value => value + 1)}>Reset kamery ↺</Button></Group></div>
     <div className="canvas-frame">
       {!result?.render ? <div className="preview-loading"><Text c="dimmed">Připravuji náhled…</Text></div> : lost ? <Fallback retry={retry} /> :
         <PreviewBoundary key={attempt} retry={retry}><Canvas shadows="percentage" frameloop="demand" dpr={[1, 1.7]}
@@ -128,6 +131,7 @@ export default function Preview({ result, stale, status, riskMap, focused }: Pre
       {stale && result && <div className="stale-label" role="status">{status === 'invalid' ? 'Neplatný vstup · poslední platný náhled' : status === 'failed' ? 'Výpočet selhal · předchozí náhled' : 'Přepočítávám · zobrazen předchozí náhled'}</div>}
       {result && !lost && <div className="canvas-dimensions"><span className="axis-label">Z-UP · +Z</span><span className="dimension-label">Výška {height.toLocaleString('cs-CZ')} mm</span></div>}
       {riskMap && <div className="map-caption">MAPA GEOMETRICKÝCH RIZIK{focused ? ` · Z ${focused.zMinMm.toFixed(1)}–${focused.zMaxMm.toFixed(1)} mm` : ''}</div>}
+      {showMap && !riskMap && <div className={`map-caption${stale && result ? ' map-caption-stale' : ''}`} role="status">{analysisStatus === 'failed' ? 'MAPA NENÍ DOSTUPNÁ · ANALÝZA NEDOKONČENA' : 'MAPA ČEKÁ NA AKTUÁLNÍ ANALÝZU'}</div>}
       <div className="bed-label">{mode === 'print' ? 'KRČEK NA PODLOŽCE · Z = 0' : 'ZAVĚŠENÝ POHLED · POUZE NÁHLED'}</div>
     </div>
     <Group justify="space-between" className="preview-controls" gap="sm"><SegmentedControl size="xs" value={mode}

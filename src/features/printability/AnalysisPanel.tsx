@@ -1,4 +1,4 @@
-import { Alert, Badge, Button, Divider, Group, Paper, Stack, Switch, Text, Title } from '@mantine/core';
+import { Alert, Badge, Button, Divider, Group, Paper, Stack, Text, Title } from '@mantine/core';
 import { riskLabels, type AnalysisMessage } from '../../analysis/types';
 import type { useAnalysis } from '../../app/useAnalysis';
 
@@ -15,8 +15,7 @@ const color = (severity: AnalysisMessage['severity']) => severity === 'high' ? '
 export function AnalysisPanel({ analysis, revision, showMap, onMapChange, focused, onFocus, detailsOnly = false }: Props) {
   const report = analysis.report;
   return <Paper withBorder={!detailsOnly} p="lg" radius="lg" className="analysis-panel" aria-label="Tisková analýza">
-    <Group justify="space-between" mb="sm"><Title order={2} size="h4">Tisková analýza</Title>
-      <Switch checked={showMap} onChange={event => onMapChange(event.currentTarget.checked)} label="Mapa rizik" size="xs" /></Group>
+    <Group justify="space-between" mb="sm"><Title order={2} size="h4">Tisková analýza</Title></Group>
     {!detailsOnly && <div role="status" aria-live="polite" data-testid="analysis-status" data-state={analysis.status} data-input-hash={analysis.inputHash} data-revision={revision}>
       <Badge color={!report ? 'gray' : report.risk === 'high' ? 'red' : report.risk === 'warning' ? 'yellow' : 'pine'} variant="light">
         {report ? riskLabels[report.risk] : analysis.status === 'pending' ? 'Vyhodnocuji · nevyhodnoceno' : 'Nevyhodnoceno'}

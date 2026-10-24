@@ -6,4 +6,4 @@ export const stlDetails = {
 export type StlDetail = keyof typeof stlDetails;
 export const defaultStlDetail: StlDetail = 'standard';
 export const EXPORT_TRIANGLE_LIMIT = 2_000_000;
-export const PREVIEW_TRIANGLE_LIMIT = 600_000;
+export const PREVIEW_TRIANGLE_LIMIT = 1_200_000;

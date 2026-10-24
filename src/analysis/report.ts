@@ -17,7 +17,7 @@ export function analyse(p: OrnamentParameters, print: PrintAssumptions, mesh: Me
   const messages: AnalysisMessage[] = [];
   if (overhang.riskyFaces) messages.push({ code: 'NORMAL_OVERHANG', severity: overhang.maxAngleDeg > print.maxOverhangFromVerticalDeg + options.highOverhangExtraDeg ? 'high' : 'warning',
     title: 'Rychlé rozšiřování povrchu', detail: 'Vnější normály ukazují rozšiřování nad zadaný limit od svislé stěny.',
-    recommendation: 'Zvětšete výšku těla či délku náběhu, případně snižte amplitudu.',
+    recommendation: 'Zvětšete výšku těla či délku náběhu, případně snižte hloubku žeber nebo vln.',
     zMinMm: overhang.zMinMm!, zMaxMm: overhang.zMaxMm!, measured: overhang.maxAngleDeg, limit: print.maxOverhangFromVerticalDeg });
   for (const direction of ['upper', 'lower'] as const) {
     const affected = layers.bands.filter(b => b[`${direction}Overlap`] < print.minOverlapRatio || b[`${direction}DistanceMm`] >= print.extrusionWidthMm - 1e-9);
@@ -29,7 +29,7 @@ export function analyse(p: OrnamentParameters, print: PrintAssumptions, mesh: Me
     messages.push({ code: direction === 'upper' ? 'UPPER_SUPPORT' : 'LOWER_RETREAT', severity: maxDistance >= print.extrusionWidthMm - 1e-9 ? 'high' : 'warning',
       title: direction === 'upper' ? 'Nízký odhad opory nové vrstvy' : 'Prudká změna předchozího obrysu',
       detail: `${trend} ${direction === 'upper' ? 'Body vyššího obrysu jsou daleko od úseček nižšího.' : 'Body nižšího obrysu jsou daleko od úseček vyššího; mohou zanikat detaily.'}`,
-      recommendation: 'Snižte vrstvu, amplitudu nebo twist; případně zvětšete výšku těla či délku náběhu.',
+      recommendation: 'Snižte vrstvu, hloubku žeber či vln nebo zkroucení; případně zvětšete výšku těla či délku náběhu.',
       zMinMm: Math.min(...affected.map(b => b.zMinMm)), zMaxMm: Math.max(...affected.map(b => b.zMaxMm)), measured: maxDistance,
       limit: print.extrusionWidthMm * (1 - print.minOverlapRatio) });
   }
@@ -38,8 +38,9 @@ export function analyse(p: OrnamentParameters, print: PrintAssumptions, mesh: Me
       detail: 'Lokální poloměr křivosti obrysu je menší než řád šířky extruze. Offset ve sliceru může detail vyhladit nebo odstranit.',
       recommendation: 'Snižte počet žeber nebo amplitudu a zkontrolujte skutečnou dráhu ve sliceru.',
       zMinMm: p.neck.lengthMm, zMaxMm: total, measured: layers.minCurvatureRadiusMm, limit: print.extrusionWidthMm * options.detailWidthMultiples });
-  messages.push({ code: 'OPEN_TIP', severity: 'info', title: 'Zakončení může zůstat otevřené',
-    detail: 'Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.',
+  messages.push({ code: 'OPEN_TIP', severity: 'info', title: p.body.tipRadiusMm === 0 ? 'Uzavření špičky ověřte ve sliceru' : 'Zakončení může zůstat otevřené',
+    detail: p.body.tipRadiusMm === 0 ? 'STL končí v jediném vrcholu. Vase dráha může skončit dříve a na výtisku zanechat drobný otvor.'
+      : 'Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.',
     recommendation: 'Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.', zMinMm: total - print.layerHeightMm * 2, zMaxMm: total, measured: tip.diameterMm });
   if (tip.risk) messages.push({ code: 'SMALL_TIP', severity: tip.risk === 2 ? 'high' : 'warning', title: 'Malý koncový obrys',
     detail: 'Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.',

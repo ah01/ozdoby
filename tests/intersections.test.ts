@@ -6,8 +6,11 @@ import { hasNonIncidentIntersection } from './helpers/intersections';
 it('independently audits full export meshes of all presets and phase-0 wide fixture', () => {
   const wide = createPreset('round'); wide.body.baseDiameterMm = 90; wide.body.heightMm = 35;
   const transformed = createPreset('diamond');
-  Object.assign(transformed.surface, { amplitudeMm: 0.7, ribs: 8, twistDeg: 60, amplitudeProfile: 'middle', twistProfile: 'reverse' });
-  for (const p of [createPreset(), createPreset('round'), createPreset('drop'), createPreset('egg'), createPreset('diamond'), transformed, wide])
+  Object.assign(transformed.surface, { amplitudeMm: 0.7, ribs: 8, twistDeg: 60, amplitudeProfile: 'middle', twistProfile: 'reverse',
+    ribShape: 'narrow', ribRotationDeg: 15, waveAmplitudeMm: 0.3, waveCount: 4, waveShiftPercent: 25 });
+  const pointed = createPreset('diamond'); pointed.body.tipRadiusMm = 0;
+  Object.assign(pointed.surface, { amplitudeMm: 0.5, ribs: 8, twistDeg: 60, waveAmplitudeMm: 0.2 });
+  for (const p of [createPreset(), createPreset('round'), createPreset('drop'), createPreset('egg'), createPreset('diamond'), transformed, pointed, wide])
     expect(hasNonIncidentIntersection(generateMesh(p))).toBe(false);
 }, 60_000);
 

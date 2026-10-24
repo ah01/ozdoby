@@ -1,0 +1,66 @@
+{
+  "measuredAt": "2026-10-24T21:37:59.870Z",
+  "node": "v26.12.1",
+  "platform": "win32",
+  "parameters": {
+    "schemaVersion": 1,
+    "shape": "elongated",
+    "body": {
+      "baseDiameterMm": 100,
+      "heightMm": 140,
+      "maxRadiusAt": 0.5,
+      "tipRadiusMm": 3
+    },
+    "neck": {
+      "diameterMm": 14,
+      "lengthMm": 8
+    },
+    "surface": {
+      "ribs": 24,
+      "amplitudeMm": 3,
+      "twistDeg": 180,
+      "blendLengthMm": 20,
+      "amplitudeProfile": "uniform",
+      "twistProfile": "reverse",
+      "ribShape": "narrow",
+      "ribRotationDeg": 0,
+      "waveAmplitudeMm": 1,
+      "waveCount": 8,
+      "waveShiftPercent": 0
+    }
+  },
+  "previewTriangleLimit": 1200000,
+  "exportTriangleLimit": 2000000,
+  "analysisDistanceQueryLimit": 12000000,
+  "maxRssMiB": 307.265625,
+  "methodology": "Single compute() calls, including preview render buffers or coarse STL/final analysis. Cumulative Node RSS, not browser memory or warmed p95.",
+  "probes": [
+    {
+      "kind": "mesh",
+      "triangles": 761616,
+      "sampling": {
+        "angles": 516,
+        "heights": 738,
+        "toleranceMm": 0.2,
+        "errorBoundMm": 0.1988106051022631,
+        "strategy": "local"
+      },
+      "durationMs": 1634.5729999999999
+    },
+    {
+      "kind": "stl",
+      "triangles": 1018240,
+      "sampling": {
+        "angles": 592,
+        "heights": 860,
+        "toleranceMm": 0.15,
+        "errorBoundMm": 0.14980807140305652,
+        "strategy": "local"
+      },
+      "stlBytes": 50912084,
+      "analysisStatus": "ready",
+      "distanceQueries": 7892352,
+      "durationMs": 13233.3322
+    }
+  ]
+}

@@ -1,0 +1,80 @@
+import { test, expect, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
+import { parseSettings } from '../../src/io/preset';
+import { generateMesh } from '../../src/geometry/mesh';
+import { encodeStl } from '../../src/io/stl';
+import { validateMesh } from '../../src/geometry/validate';
+import { readStl } from '../helpers/read-stl';
+
+const ready = async (page: Page) => {
+  await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-state', 'ready');
+  await expect(page.getByTestId('analysis-status')).toHaveAttribute('data-state', 'ready');
+};
+const choose = async (page: Page, label: string, value: string) => {
+  await page.getByRole('combobox', { name: label, exact: true }).click();
+  await page.getByRole('option', { name: value, exact: true }).click();
+};
+
+test('separate transformation sections save and export combined patterns with independent resets', async ({ page }, testInfo) => {
+  await page.goto('/'); await ready(page);
+  await expect(page.getByRole('button', { name: /^Žebra/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Zkroucení/ })).toHaveAttribute('aria-expanded', 'true');
+  await expect(page.getByRole('button', { name: /^Vodorovné vlny/ })).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByLabel('Hloubka vln', { exact: true })).toBeHidden();
+  await page.getByLabel('Výška těla', { exact: true }).fill('110');
+  await page.getByLabel('Amplituda žeber', { exact: true }).fill('0,8');
+  await page.getByLabel('Počet žeber', { exact: true }).fill('8');
+  await page.getByLabel('Pootočení žeber', { exact: true }).fill('15');
+  await choose(page, 'Tvar žeber', 'Široké vrcholy');
+  await page.getByLabel('Celkové zkroucení', { exact: true }).fill('60');
+  await page.getByRole('button', { name: /^Vodorovné vlny/ }).click();
+  await page.getByLabel('Hloubka vln', { exact: true }).fill('0,5');
+  await page.getByLabel('Počet vln po výšce', { exact: true }).fill('5');
+  await page.getByLabel('Posun vln', { exact: true }).fill('25'); await ready(page);
+  await expect(page.getByText('Nastavení uloženo v tomto prohlížeči', { exact: true })).toBeVisible();
+  await page.reload(); await ready(page);
+  await page.getByRole('button', { name: /^Vodorovné vlny/ }).click();
+  await expect(page.getByLabel('Hloubka vln', { exact: true })).toHaveValue('0,5 mm');
+  await expect(page.getByRole('combobox', { name: 'Tvar žeber', exact: true })).toHaveValue('Široké vrcholy');
+  const jsonPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Uložit parametry JSON', exact: true }).click();
+  const jsonPath = testInfo.outputPath('transforms.json'); await (await jsonPromise).saveAs(jsonPath);
+  const settings = parseSettings(await readFile(jsonPath, 'utf8'));
+  expect(settings.parameters.surface).toMatchObject({ ribShape: 'broad', ribRotationDeg: 15, waveAmplitudeMm: 0.5, waveCount: 5, waveShiftPercent: 25 });
+  const stlPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true }).click();
+  const stlPath = testInfo.outputPath('transforms.stl'); await (await stlPromise).saveAs(stlPath);
+  const bytes = new Uint8Array(await readFile(stlPath));
+  expect(bytes).toEqual(new Uint8Array(encodeStl(generateMesh(settings.parameters))));
+  expect(validateMesh(readStl(bytes.buffer)).valid).toBe(true);
+  await page.getByLabel('Posun vln', { exact: true }).scrollIntoViewIfNeeded();
+  await page.screenshot({ path: testInfo.outputPath('transform-sections.jpg') });
+  await page.getByRole('button', { name: 'Obnovit vlny', exact: true }).click(); await ready(page);
+  await expect(page.getByLabel('Hloubka vln', { exact: true })).toHaveValue('0 mm');
+  await expect(page.getByLabel('Amplituda žeber', { exact: true })).toHaveValue('0,8 mm');
+  await expect(page.getByLabel('Celkové zkroucení', { exact: true })).toHaveValue('60 °');
+  await page.getByRole('button', { name: 'Obnovit zkroucení', exact: true }).click(); await ready(page);
+  await expect(page.getByLabel('Celkové zkroucení', { exact: true })).toHaveValue('0 °');
+  await expect(page.getByRole('combobox', { name: 'Tvar žeber', exact: true })).toHaveValue('Široké vrcholy');
+  await page.getByRole('button', { name: 'Obnovit žebra', exact: true }).click(); await ready(page);
+  await expect(page.getByLabel('Amplituda žeber', { exact: true })).toHaveValue('0 mm');
+  await expect(page.getByLabel('Výška těla', { exact: true })).toHaveValue('110 mm');
+});
+
+test('mobile settings show invalid wave controls and preserve other choices during correction', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/'); await ready(page);
+  await page.getByRole('button', { name: 'Otevřít nastavení', exact: true }).click();
+  await page.getByRole('button', { name: /^Vodorovné vlny/ }).click();
+  await page.getByLabel('Počet vln po výšce', { exact: true }).fill('2,5');
+  await expect(page.getByLabel('Počet vln po výšce', { exact: true })).toHaveAttribute('aria-invalid', 'true');
+  await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-state', 'invalid');
+  await choose(page, 'Tvar žeber', 'Úzké vrcholy');
+  await expect(page.getByRole('combobox', { name: 'Tvar žeber', exact: true })).toHaveValue('Úzké vrcholy');
+  await page.getByRole('button', { name: 'Obnovit vlny', exact: true }).click(); await ready(page);
+  await expect(page.getByLabel('Počet vln po výšce', { exact: true })).toHaveValue('4');
+  await expect(page.getByRole('combobox', { name: 'Tvar žeber', exact: true })).toHaveValue('Úzké vrcholy');
+  await page.getByRole('button', { name: 'Zavřít nastavení', exact: true }).click();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  await expect(page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true })).toBeInViewport();
+});

@@ -44,6 +44,7 @@ export function Workspace({ state, dispatch, geometry, analysis, exporter, valid
       {!mobile && <aside className="workspace-settings" aria-label="Nastavení modelu" data-testid="settings-panel">{settings}</aside>}
       <Suspense fallback={<Paper className="preview-loading">Načítám 3D náhled…</Paper>}>
         <Preview result={geometry.last} stale={!current} status={geometry.status}
+          showMap={showMap} onMapChange={onMapChange} analysisStatus={analysis.status}
           riskMap={showMap && report ? { key: analysis.inputHash, colors: report.colors } : null}
           focused={showMap && report ? focused : null} />
       </Suspense>

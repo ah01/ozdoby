@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { defaultPrint } from '../src/domain/parameters';
 import { createPreset } from '../src/domain/presets';
 import { FaceRegion, generateMesh, type MeshData } from '../src/geometry/mesh';
@@ -6,6 +6,7 @@ import { analyseOverhang } from '../src/analysis/overhang';
 import { analyseLayers, ornamentSurface, type AnalysisSurface } from '../src/analysis/layerSupport';
 import { SegmentIndex } from '../src/analysis/segmentIndex';
 import { analyse } from '../src/analysis/report';
+import * as analysisModule from '../src/analysis/report';
 import { defaultAnalysisOptions } from '../src/analysis/types';
 import { analysisHash } from '../src/workers/analysisProtocol';
 import { isCurrentResponse, requestHash } from '../src/workers/protocol';
@@ -118,7 +119,9 @@ it('analysis limits fail explicitly; a valid final STL survives an unfinished an
   expect(() => analyse(p, defaultPrint, generateMesh(p, 'preview'), { ...defaultAnalysisOptions, maxDistanceQueries: 1 })).toThrow('limit');
   p.body.heightMm = 140;
   const print = { ...defaultPrint, layerHeightMm: 0.05 };
+  const failure = vi.spyOn(analysisModule, 'analyse').mockImplementationOnce(() => { throw new Error('Analýza překročila limit vzorkování.'); });
   const response = compute({ requestId: 1, revision: 0, kind: 'stl', inputHash: requestHash(p, 'stl', print), parameters: p, print });
+  failure.mockRestore();
   expect(response.status).toBe('ready');
   if (response.status === 'ready') { expect(response.stl?.byteLength).toBeGreaterThan(84); expect(response.analysis?.status).toBe('failed'); }
 });

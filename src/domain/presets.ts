@@ -10,6 +10,7 @@ export function createPreset(shape: ShapeId = 'elongated'): OrnamentParameters {
     body: { baseDiameterMm: 56, heightMm: shape === 'round' ? 60 : shape === 'drop' ? 84 : shape === 'egg' ? 76 : shape === 'diamond' ? 90 : 88,
       maxRadiusAt: shape === 'drop' ? 0.65 : shape === 'egg' ? 0.58 : 0.5, tipRadiusMm: 1.2 },
     neck: { diameterMm: 14, lengthMm: 8 },
-    surface: { ribs: 12, amplitudeMm: 0, twistDeg: 0, blendLengthMm: 8, amplitudeProfile: 'uniform', twistProfile: 'smooth' },
+    surface: { ribs: 12, amplitudeMm: 0, twistDeg: 0, blendLengthMm: 8, amplitudeProfile: 'uniform', twistProfile: 'smooth',
+      ribShape: 'rounded', ribRotationDeg: 0, waveAmplitudeMm: 0, waveCount: 4, waveShiftPercent: 0 },
   };
 }

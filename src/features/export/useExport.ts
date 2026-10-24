@@ -40,7 +40,7 @@ export function useExport() {
         else if (data.status === 'failed') setError(data.error.message);
         job.terminate(); worker.current = null; setExportRevision(null);
       };
-      job.onerror = () => { if (worker.current === job) { setError('Export STL selhal. Zkuste hrubší detail STL nebo nižší amplitudu či počet žeber.'); cancel(); } };
+      job.onerror = () => { if (worker.current === job) { setError('Export STL selhal. Zkuste hrubší detail STL nebo snižte hloubku či počet žeber a vln.'); cancel(); } };
       job.postMessage(request);
     } catch { setError('Exportní worker není dostupný.'); cancel(); }
   };

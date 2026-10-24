@@ -20,7 +20,7 @@ body { background: #f6f5ef; color: #183c35; }
 .parameter-panel .mantine-Slider-root { margin-inline: 4px; }
 .print-panel { margin-top: 16px; }
 .preview-panel { display: flex; flex-direction: column; height: 100%; min-height: 0; min-width: 0; overflow: hidden; background: #eef1e9; }
-.preview-toolbar { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 10px; padding: 12px 20px 0; }
+.preview-toolbar { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; flex-wrap: wrap; gap: 10px; padding: 12px 20px 0; }
 .canvas-frame { flex: 1; min-height: 0; position: relative; }
 .canvas-frame canvas { touch-action: none; }
 .preview-loading, .preview-fallback { display: grid; place-content: center; min-height: 0; height: 100%; padding: 24px; }
@@ -30,6 +30,7 @@ body { background: #f6f5ef; color: #183c35; }
 .axis-label { font: 600 10px 'Segoe UI', system-ui, sans-serif; color: #3d6e9e; pointer-events: none; }
 .canvas-dimensions { position: absolute; bottom: 48px; right: 20px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
 .map-caption { position: absolute; left: 20px; top: 18px; font-size: 10px; letter-spacing: .8px; color: #536b58; pointer-events: none; }
+.map-caption-stale { top: 62px; }
 .stale-label { position: absolute; top: 12px; left: 16px; right: 16px; padding: 9px 12px; background: #fff7ddf5; color: #826325; border: 1px solid #e8dba9; border-radius: 7px; font-size: 11px; pointer-events: none; }
 .bed-label { position: absolute; bottom: 20px; left: 24px; color: #7a8a77; font-size: 9px; letter-spacing: 1px; pointer-events: none; }
 .workspace-bottom { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(230px, 1.3fr) auto; align-items: center; gap: 12px 24px; border-top: 1px solid #d8e0d1; padding: 12px 20px; background: #fffefa; }

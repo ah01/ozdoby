@@ -25,7 +25,6 @@ test('print-only edits replace the report without changing geometry revision or 
 
 test('risk colors follow the latest print inputs and warning regions are localized', async ({ page }) => {
   await page.goto('/'); await ready(page);
-  await page.getByTestId('analysis-details-button').click();
   await page.getByLabel('Mapa rizik', { exact: true }).check();
   const initialHash = await page.getByTestId('analysis-status').getAttribute('data-input-hash');
   await expect(page.getByTestId('preview')).toHaveAttribute('data-risk-map', initialHash!);
@@ -49,6 +48,9 @@ test('a failed analysis is unassessed and keeps geometrically valid STL availabl
   await page.goto('/');
   await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-state', 'ready');
   await expect(page.getByTestId('analysis-status')).toHaveAttribute('data-state', 'failed');
+  await page.getByLabel('Mapa rizik', { exact: true }).check();
+  await expect(page.getByTestId('preview')).toHaveAttribute('data-risk-map', 'off');
+  await expect(page.getByText('MAPA NENÍ DOSTUPNÁ · ANALÝZA NEDOKONČENA', { exact: true })).toBeVisible();
   await page.getByTestId('analysis-details-button').click();
   await expect(page.getByText('Analýza nedokončena', { exact: true })).toBeVisible();
   const pending = page.waitForEvent('download'); await page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true }).click();

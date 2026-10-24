@@ -52,6 +52,32 @@ it('edits peak position in percent, revises transformations and resets their def
   expect(reset.parameters).toEqual(createPreset('egg')); expect(reset.errors).toEqual({});
 });
 
+it('resets each transformation independently and preserves unrelated dimensions and choices', () => {
+  let state = initialEditor(createPreset('diamond'), defaultPrint);
+  for (const [id, value] of [['body.heightMm', '110'], ['surface.amplitudeMm', '0.8'], ['surface.twistDeg', '60'], ['surface.waveAmplitudeMm', '0.4']] as const)
+    state = editorReducer(state, { type: 'field', id, value });
+  state = editorReducer(state, { type: 'surfaceChoice', id: 'ribShape', value: 'broad' });
+  state = editorReducer(state, { type: 'resetSection', section: 'waves' });
+  expect(state.parameters.surface.waveAmplitudeMm).toBe(0); expect(state.parameters.surface.amplitudeMm).toBe(0.8);
+  expect(state.parameters.surface.twistDeg).toBe(60); expect(state.parameters.body.heightMm).toBe(110);
+  state = editorReducer(state, { type: 'resetSection', section: 'twist' });
+  expect(state.parameters.surface.twistDeg).toBe(0); expect(state.parameters.surface.ribShape).toBe('broad');
+  state = editorReducer(state, { type: 'resetSection', section: 'ribs' });
+  expect(state.parameters.surface.ribShape).toBe('rounded'); expect(state.parameters.surface.amplitudeMm).toBe(0);
+  expect(state.parameters.body.heightMm).toBe(110);
+});
+
+it('keeps choice drafts while a numeric value is invalid and auto-resolves a section reset', () => {
+  let state = initialEditor(createPreset(), defaultPrint);
+  state = editorReducer(state, { type: 'field', id: 'surface.waveCount', value: '2.5' });
+  state = editorReducer(state, { type: 'surfaceChoice', id: 'ribShape', value: 'narrow' });
+  expect(state.choices.ribShape).toBe('narrow'); expect(state.parameters.surface.ribShape).toBe('rounded');
+  expect(state.errors['surface.waveCount']).toContain('celé');
+  state = editorReducer(state, { type: 'resetSection', section: 'waves' });
+  expect(state.errors).toEqual({}); expect(state.parameters.surface.ribShape).toBe('narrow');
+  expect(state.revision).toBe(1);
+});
+
 it('retains the bottom-layer clearance constraint when the neck changes', () => {
   const state = initialEditor(createPreset(), { ...defaultPrint, bottomSolidLayers: 30 });
   const next = editorReducer(state, { type: 'field', id: 'neck.lengthMm', value: '6' });

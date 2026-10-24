@@ -20,11 +20,30 @@ Twist je `twistDeg * T(u)`: původní plynulý `T=smoothstep(u)`, rovnoměrný `
 
 Schéma JSON zůstává ve verzi 1: chybějící `amplitudeProfile` a `twistProfile` se doplní jako `uniform` a `smooth`. Neznámé hodnoty či klíče se dál odmítají. Starší uložené nastavení zachová tvar. Nové volby se ukládají v JSON i místním úložišti a vstupují do worker hashů.
 
+Povrch je dále rozšířený o tvar a pootočení žeber a nezávislé vodorovné vlny:
+
+```text
+r(θ,z) = r0(z) + Ar * E(z) * w(v) + Aw * B(z) * sin(f(z−n) + δ)
+v = k * (θ − twist(z) − rotation)
+w(v) = cos(v) + c * (cos²(v) − 1)
+f = 2π * waveCount / H; δ = 2π * waveShiftPercent / 100
+```
+
+Koeficient `c` je 0 pro oblá žebra, +0,45 pro úzké vrcholy a −0,45 pro široké vrcholy. Remapování kosinu je monotónní v [-1,1] (`1+2c*cos(v) >= 0,1`), takže zachová stejné minimum/maximum ±1. Nevytváří ostré zlomy. Derivace podle fáze jsou `w'=-sin(v)−c*sin(2v)` a `w''=-cos(v)−2c*cos(2v)`; jejich bezpečné meze jsou `a1=1+|c|`, `a2=1+2|c|`. Analýza lokální křivosti používá tyto skutečné derivace.
+
+Vodorovné vlny mají hloubku 0–2 mm, 1–12 period po výšce těla a posun 0–100 % jedné periody. Fungují i při nulové amplitudě žeber; průřezy tehdy zůstávají kruhové. Ochranná obálka `B` zajišťuje nulovou deformaci i první derivaci na krčku a zakončení. Čtvrtiny period včetně posunu se přidávají mezi kritické výšky triangulace i analýzy. Posun 100 % a otočení 360° se normalizují na nulu. Staré JSON dostávají `ribShape=rounded`, `ribRotationDeg=0`, `waveAmplitudeMm=0`, `waveCount=4`, `waveShiftPercent=0`.
+
 ## Uzavřenost a samoprůniky
 
-Každý vodorovný prstenec má kladný poloměr, stejné úhlové vzorky v rostoucím pořadí a společný střed. Z roste striktně. Poslední úhlový segment navazuje modulo počtu vrcholů, takže šev nemá duplicitní vrcholy. Dva trojúhelníky na buňku mají vnější orientaci. Vějíře s jediným středovým vrcholem uzavírají oba konce; poloměr špičky je nenulový.
+Každý vodorovný prstenec má kladný poloměr, stejné úhlové vzorky v rostoucím pořadí a společný střed. Z roste striktně. Poslední úhlový segment navazuje modulo počtu vrcholů, takže šev nemá duplicitní vrcholy. Dva trojúhelníky na buňku mají vnější orientaci. Při kladném poloměru zakončení vějíře s jediným středovým vrcholem uzavírají oba konce. Při nulovém poloměru se koncový prstenec ani disk nevytváří: poslední kladný prstenec se spojí s jediným společným vrcholem na ose. Tento vějíř patří k plášti a má šikmé normály, nikoli normály plochého víčka.
 
-Kladnost radiální obálky se ověřuje analytickou intervalovou mezí `min(r0) - A * max(E) > 1e-6 mm`. Intervaly se dělí v maximu profilu a hranicích náběhu/doběhu. Na každém takovém intervalu je základní profil monotónní, náběh monotónně roste a doběh monotónně klesá. Pokud konzervativní mez nestačí, interval se rekurzivně rozpůlí; po 16 úrovních se nejistý vstup odmítne. Vzorkování sítě tím nemůže skrýt záporný poloměr.
+Poloměr zakončení v UI i schématu dovoluje 0–3 mm (krok ovladače 0,1 mm). Nulový poloměr používá stabilní vyhodnocení horního profilu od vrcholu: `r0=R*((1-w)*f(v)+w*v*(2-v))`, `v=(1-u)/(1-peak)`, `w=0.1`. Zachová původní rodinu siluety a nulový sklon u maxima, u vrcholu má konečný kuželový sklon. Vyhne se odčítání téměř stejných poloměrů i sevřenému hrotu s nulovým sklonem. Původní kladná zakončení se nemění.
+
+Pro špičku je povolený kontakt s osou pouze v posledním bodě. V koncovém intervalu délky `d<=min(b,L)` platí `r0 >= w*R*d/L` a absolutní deformace nejvýše `3*(Ar+Aw)*d²/b²`. Striktní nerovnost těchto koeficientů certifikuje celý otevřený interval až k vrcholu; jinde zůstává intervalová kontrola kladnosti. Globální i lokální meze derivací připočítávají příspěvek kuželového přechodu, takže platí i původní mez interpolace.
+
+Vrcholové trojúhelníky se kontrolují ve skutečných float32 souřadnicích před vytvořením sítě. Numericky příliš blízký poslední prstenec lze vynechat pouze pokud sloučený poslední interval zůstane v cílové toleranci podle lokální meze; jinak se vrátí explicitní chyba přesnosti. Vzorky pak mají jeden vrchol na nejvyšším Z, žádné nulové trojúhelníky a Eulerovu charakteristiku 2. Analýza 1.4.0 umí koncový bod a výslovně odlišuje špičku STL od uzavření skutečné vase dráhy.
+
+Kladnost radiální obálky se ověřuje analytickou intervalovou mezí `min(r0) - (Ar + Aw) * max(B) > 1e-6 mm`. Jde o konzervativní mez celkového účinku žeber i vln, protože `|w|<=1`, `|sin|<=1` a `0<=W<=1`. Intervaly se dělí v maximu profilu a hranicích náběhu/doběhu. Na každém takovém intervalu je základní profil monotónní, náběh monotónně roste a doběh monotónně klesá. Pokud konzervativní mez nestačí, interval se rekurzivně rozpůlí; po 16 úrovních se nejistý vstup odmítne. Vzorkování sítě tím nemůže skrýt záporný poloměr. Při odmítnutí UI označí obě aktivní hloubky a otevře jejich sekce.
 
 Každý trojúhelník pláště zůstává v příslušném konvexním úhlovém sektoru (mezera menší než π) a mezi dvěma sousedními výškami. Oddělené sektory nebo výškové intervaly se nemohou objemově překřížit. Sousední buňky mají sdílené vrcholy a hrany. To je záruka konstrukce této omezené rodiny, nikoli obecný test libovolného CAD modelu.
 
@@ -42,19 +61,25 @@ error <= Mθθ * Δθ² / 8 + Mθz * Δθ * Δz / 4 + Mzz * Δz² / 8
 
 `M` jsou horní meze norem příslušných druhých derivací v celém intervalu. Odvození: rozvoj v bodě uvnitř trojúhelníku, vážený barycentrickými souřadnicemi vrcholů, ruší členy prvního řádu. Vážený rozptyl každé souřadnice je nejvýše čtvrtina čtverce jejího rozsahu. Smíšený člen je omezen Cauchyho–Schwarzovou nerovností. Mez tedy platí i na hranách a uvnitř trojúhelníků, nikoli jen v generovaných vrcholech.
 
-Na hladkém úseku délky `L` se změnou poloměru `D` jsou `|r0'| <= c1 D/L` a `|r0''| <= c2 D/L²`, kde faktory odpovídají profilu v tabulce. Pro jediné aktivní rameno původní obálky délky `b` jsou `|B'| <= 1.5/b`, `|B''| <= 6/b²`; mimo ramena jsou obě meze nula. Náběh a doběh se díky `2b <= H` nepřekrývají uvnitř intervalu. Pro `E=B*W` platí `|E'| <= |B'|+w1/H` a `|E''| <= |B''|+2|B'|w1/H+w2/H²`. Fáze žeber má meze `q1 = k |twist| t1/H` a `q2 = k |twist| t2/H²`. Meze i kritické výšky jsou společné pro triangulaci a mezivrstvovou analýzu 1.1.0 v `surfaceBounds.ts`.
+Na hladkém úseku délky `L` se změnou poloměru `D` jsou `|r0'| <= c1 D/L` a `|r0''| <= c2 D/L²`, kde faktory odpovídají profilu v tabulce. Pro jediné aktivní rameno původní obálky délky `b` jsou `B1 = 1.5/b`, `B2 = 6/b²`; mimo ramena jsou obě meze nula. Náběh a doběh se díky `2b <= H` nepřekrývají uvnitř intervalu. Pro `E=B*W` platí `E1 <= B1+w1/H` a `E2 <= B2+2B1*w1/H+w2/H²`. Fáze žeber má meze `q1 = k |twist| t1/H` a `q2 = k |twist| t2/H²`. Vlny přidávají meze `D1=Aw*(B1+f)` a `D2=Aw*(B2+2B1*f+f²)`. Meze i kritické výšky jsou společné pro triangulaci a mezivrstvovou analýzu 1.2.0 v `surfaceBounds.ts`.
 
 ```text
-Mθθ <= R + A (k+1)²
-Mθz <= |r0'| + A (k+1) (|E'| + q1)
-Mzz <= |r0''| + A (|E''| + 2 |E'| q1 + q2 + q1²)
+Mθθ <= R + Aw + Ar (1 + 2k*a1 + k²*a2)
+Mθz <= |r0'| + D1 + Ar (E1*(1+k*a1) + q1*(a1+k*a2))
+Mzz <= |r0''| + D2 + Ar (E2 + 2E1*q1*a1 + q2*a1 + q1²*a2)
 ```
 
-Nesplnění meze půlí interval Z. Na přání uživatele je původní limit 300 000 zvýšen na 2 000 000 trojúhelníků pro STL (binární soubor nejvýše 100 000 084 bajtů) a 600 000 pro náhled. Překročení vrací `RESOURCE_LIMIT` s doporučením hrubšího STL, bez automatického zhoršení přesnosti; odmítnutí probíhá už při plánování výšek před alokací sítě. Část kombinací z rozsahů proto může být nadále odmítnuta. Pro float32 je rezervováno dalších 0,0001 mm uvnitř každé cílové tolerance. Pro maximální souřadnici 156 mm je velikost kvantizačního posunu menší než 0,000014 mm.
+Nesplnění meze půlí interval Z. Limit je 2 000 000 trojúhelníků pro STL (binární soubor nejvýše 100 000 084 bajtů) a nově 1 200 000 pro náhled. Překročení vrací `RESOURCE_LIMIT` s doporučením hrubšího STL, bez automatického zhoršení přesnosti; odmítnutí probíhá už při plánování výšek před alokací sítě. Část kombinací z rozsahů proto může být nadále odmítnuta. Pro float32 je rezervováno dalších 0,0001 mm uvnitř každé cílové tolerance. Pro maximální souřadnici 156 mm je velikost kvantizačního posunu menší než 0,000014 mm.
+
+Pro husté náhledy nad původních 600 000 ploch a exporty překračující limit se před odmítnutím zkouší lokální meze (`localBounds.ts`) a několik počtů úhlových segmentů. Zůstává minimálně 128/256 segmentů a 16 na periodu žebra; úhlový člen se plánuje nejvýše do třetiny interpolačního rozpočtu. Každý kandidát projde celým dělením Z se stejnou tolerancí, vybere se nejmenší přípustná síť. Do té doby se nealokují souřadnice ani indexy. Menší existující sítě zůstávají bitově shodné.
+
+Lokální meze vycházejí z uzavřeného intervalu děleného v původních uzlech. Základní profil je na něm monotónní, jeho maximální poloměr leží na konci intervalu. Derivace kubického a kosinového profilu se omezují jejich skutečnými krajními hodnotami a případným vnitřním maximem. Rovný střed diamantu má nulovou druhou derivaci. Pro součin obálky `E=B*W` jsou nové meze `E0=B0*W0`, `E1=B1*W0+B0*W1`, `E2=B2*W0+2B1*W1+B0*W2`. Členy nesoucí amplitudu fáze se násobí `E0`; obdobně členy sinusových vln nesou skutečnou horní mez `B0`. První a druhá derivace twistu používá maxima na daném intervalu. Zůstává stejná Taylorova mez v celé buňce i rezervace pro float32. `sampling.strategy` rozlišuje původní a lokální plán.
+
+Analýza 1.3.0 používá stejnou lokální mez druhé derivace pro počet mezivrstvových vzorků každé vrstvy; interval se nejprve rozdělí ve všech kritických výškách. Nemusí tak celé tělo vzorkovat podle nejprudšího ramene. Tolerance obrysů 0,005 mm a limit 32 mezivzorků na vrstvu zůstávají zachovány, rozpočet porovnání obrysů se zvyšuje ze 3 na 12 milionů. Hranice rozpočtu stále znamená explicitní nedokončenou analýzu, nikoli potvrzení nízkého rizika.
 
 Topologická kontrola nyní používá seřazené směrované hrany ve `Float64Array`, union-find a tabulku ploch v typovaných polích s porovnáním celých trojic při kolizích. Nevytváří objekt pro každou hranu ani řetězec pro každou plochu; zachovává kontroly duplicit, manifold hran a orientace. Pro nejvýše přibližně milion vrcholů jsou celočíselné klíče hran přesně reprezentovatelné.
 
-Automatický test porovnává interpolaci obou trojúhelníků s přímým vyhodnocením povrchu na úhlových a výškových průřezech, vnitřních bodech, obvodových hranách i diagonálách žebrovaného zkrouceného modelu. Pro nulovou amplitudu se fáze vůbec nevyhodnocuje; twist tedy bitově nemění síť.
+Automatický test porovnává interpolaci obou trojúhelníků s přímým vyhodnocením povrchu na úhlových a výškových průřezech, vnitřních bodech, obvodových hranách i diagonálách kombinovaného modelu. Pro nulovou amplitudu žeber twist ani tvar/pootočení žeber bitově nemění síť; při nulové hloubce vln počet a posun vln síť také nemění.
 
 ## Tolerance a STL
 
