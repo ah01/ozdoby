@@ -4,6 +4,7 @@ import type { EditorAction, EditorState } from '../../app/editorState';
 import type { ShapeId } from '../../domain/parameters';
 import { presetLabels } from '../../domain/presets';
 import { fields, getField } from './fields';
+import { PrintPanel } from '../printability/PrintPanel';
 
 export function ParameterPanel({ state, dispatch }: { state: EditorState; dispatch: Dispatch<EditorAction> }) {
   const [opened, setOpened] = useState<string[]>(['body', 'neck', 'surface']);
@@ -43,6 +44,7 @@ export function ParameterPanel({ state, dispatch }: { state: EditorState; dispat
           </Accordion.Panel></Accordion.Item>)}
     </Accordion>
     <Button fullWidth variant="subtle" mt="md" onClick={() => dispatch({ type: 'reset' })}>Obnovit výchozí tvar</Button>
+    <PrintPanel state={state} dispatch={dispatch} />
     {Object.keys(state.errors).length > 0 && <Alert color="red" mt="sm" title="Zkontrolujte hodnoty" role="alert">
       Opravte zvýrazněné vstupy. Náhled ukazuje poslední platný tvar a export je pozastavený.
     </Alert>}

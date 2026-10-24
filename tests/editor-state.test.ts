@@ -43,16 +43,26 @@ it('presets and reset restore canonical profile values and clear invalid drafts'
 it('retains the bottom-layer clearance constraint when the neck changes', () => {
   const state = initialEditor(createPreset(), { ...defaultPrint, bottomSolidLayers: 30 });
   const next = editorReducer(state, { type: 'field', id: 'neck.lengthMm', value: '6' });
-  expect(next.errors['neck.lengthMm']).toContain('Spodní plné vrstvy');
+  expect(next.printErrors.bottomSolidLayers).toContain('Spodní plné vrstvy');
 });
 
 it('revalidates saved print assumptions when a preset restores a shorter neck', () => {
   const parameters = createPreset(); parameters.neck.lengthMm = 16;
   const state = initialEditor(parameters, { ...defaultPrint, bottomSolidLayers: 50 });
   const preset = editorReducer(state, { type: 'preset', shape: 'round' });
-  expect(preset.errors['neck.lengthMm']).toContain('Spodní plné vrstvy');
+  expect(preset.printErrors.bottomSolidLayers).toContain('Spodní plné vrstvy');
   const corrected = editorReducer(preset, { type: 'field', id: 'neck.lengthMm', value: '16' });
   expect(corrected.errors).toEqual({}); expect(corrected.parameters.shape).toBe('round');
+  expect(corrected.printErrors).toEqual({});
+});
+
+it('print-only changes preserve geometry identity and use independent revision and errors', () => {
+  const state = initialEditor(createPreset(), defaultPrint);
+  const next = editorReducer(state, { type: 'printField', id: 'extrusionWidthMm', value: '0.6' });
+  expect(next.parameters).toBe(state.parameters); expect(next.revision).toBe(0); expect(next.printRevision).toBe(1);
+  expect(next.print.extrusionWidthMm).toBe(0.6);
+  const bad = editorReducer(next, { type: 'printField', id: 'bottomSolidLayers', value: '1.5' });
+  expect(bad.printErrors.bottomSolidLayers).toContain('celé'); expect(bad.parameters).toBe(state.parameters);
 });
 
 it('handles corrupt, unknown-version and inaccessible local storage and round-trips settings', () => {

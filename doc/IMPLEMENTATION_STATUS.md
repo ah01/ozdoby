@@ -9,7 +9,7 @@ Aktualizováno 24. 10. 2026. Generátor 0.1.0. Výchozí stav byl prázdný Git 
 | 0 — geometrie → STL → slicing | Ano | Ano | CLI + rozbor G-code; GUI a snímky čekají | Ne |
 | 1 — projekt a kanonická geometrie | Ano | Ano | Tři presety testované geometricky; S01/S02 v CLI | Ne |
 | 2 — editor a Three.js náhled | Ano; Mantine, formuláře, povrch, 3D, kamera a ukládání | Ano; reducer, render copy, 6 Playwright scénářů včetně 100 úprav | — | Ne |
-| 3 — tisková analýza a mapa rizik | Ne; pouze analytický hladký odhad pro fázi 0 | Dílčí rozlišení S01/S02 | — | Ne |
+| 3 — tisková analýza a mapa rizik | Ano; normály, obousměrné obrysy, zakončení, report a barvy | Analytické fixtures a 3 nové Playwright scénáře | Nenahrazuje slicing | Ne |
 | 4 — dokončení exportního průchodu a MVP | Částečný společný exportní základ | STL/JSON základ ano; úplné E2E a matice ne | S01/S02, nikoli celá matice | Ne |
 | 5 — samostatná objímka | Ne | Ne | Ne | Ne |
 | 6 — fyzické ověření sady | Ne | Ne | — | Ne |
@@ -36,7 +36,7 @@ Prostředí: Windows, Node **26.12.1**, npm **11.20.0**, PrusaSlicer **2.9.6**, 
 | --- | --- |
 | `npm ci --ignore-scripts --no-audit` | Prošlo, čistá instalace z lockfile. Běžící Vite bylo nutné zastavit kvůli zámku nativní knihovny ve Windows. |
 | `npm run typecheck` | Prošlo. |
-| `npm test` | 32 testů ve 4 souborech prošlo; součástí je 50 deterministických kombinací parametrů, reducer, úložiště a renderovací kopie. |
+| `npm test` | 42 testů v 5 souborech prošlo; navíc analytické kužely, segmentové BVH, mezivrstvy a export s nedokončenou analýzou. |
 | `npm run build` | Prošlo včetně produkčního worker chunku. Windows sandbox při prvním pokusu blokoval `realpath`; kontrola mimo sandbox prošla. |
 | `npm run fixtures` | Dva validní solid STL/JSON a manifest, nezávislý STL round-trip. |
 | `scripts/verify-slicer.ps1` | Prošlo načtení i slicing obou fixture a diagnostická kritéria G-code. |
@@ -53,6 +53,6 @@ S01: 56 × 56 × 96 mm, 39 936 ploch, rameno 35,60° od svislice. PrusaSlicer hl
 ## Závislosti a nejbližší pokračování
 
 1. Doložit vizuální kontrolu S01/S02 ve sliceru a snímky. CLI je dostupné, ale spuštěný G-code viewer neposkytl automatizaci cílovatelné okno. Generované soubory a přesný checklist jsou připravené. Nejde o důvod blokovat nezávislou práci na editoru.
-2. Fáze 3: úplná normálová a obousměrná analýza úseček sousedních průřezů, stav reportu, mapa rizik a testy kuželů. Současný export je výslovně bez dokončené tiskové analýzy.
+2. Fáze 3 je implementovaná; podrobnosti, metriky a omezení jsou v `verification/phase-3.md`. Na přání uživatele následuje fullscreen rozložení s levým posuvným nastavením a spodním souhrnem/exportem, detaily v popoveru.
 3. Fáze 4: import JSON v UI, rozšíření Playwright scénářů o report a importní chyby, zbytek slicerové matice, výkonnostní p95 rozpočty. Výkon zatím není přijat jako ověřený; velký Three.js chunk je načítaný samostatně a jeho velikost zůstává zdokumentovaná.
 4. Fyzická tiskárna, skutečný profil, materiál a mechanické měření budou potřeba pro fázi 6. Zatím nebyly vyžadovány k nezávislé implementaci.

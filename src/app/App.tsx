@@ -6,6 +6,8 @@ import { download, modelName, useExport } from '../features/export/useExport';
 import { editorReducer, initialEditor } from './editorState';
 import { readSavedSettings, saveSettings } from './storage';
 import { useGeometry } from './useGeometry';
+import { useAnalysis } from './useAnalysis';
+import { AnalysisPanel, type FocusRegion } from '../features/printability/AnalysisPanel';
 
 const Preview = lazy(() => import('../features/preview/Preview'));
 const mm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
@@ -19,9 +21,13 @@ export function App() {
   const [state, dispatch] = useReducer(editorReducer, restored.settings, saved => initialEditor(saved.parameters, saved.print));
   const [storageNotice, setStorageNotice] = useState('');
   const [saving, setSaving] = useState(false), [help, setHelp] = useState(false);
-  const valid = Object.keys(state.errors).length === 0;
-  const geometry = useGeometry(state.parameters, state.revision, valid);
+  const [showMap, setShowMap] = useState(false), [focused, setFocused] = useState<FocusRegion | null>(null);
+  const validGeometry = Object.keys(state.errors).length === 0;
+  const valid = validGeometry && Object.keys(state.printErrors).length === 0;
+  const geometry = useGeometry(state.parameters, state.revision, validGeometry);
+  const analysis = useAnalysis(state.parameters, state.print, geometry.current, state.revision, valid);
   const exporter = useExport();
+  useEffect(() => setFocused(null), [analysis.inputHash, valid]);
 
   useEffect(() => {
     if (!valid) { setSaving(false); return; }
@@ -46,7 +52,9 @@ export function App() {
     <div className="editor-grid">
       <Paper withBorder radius="lg" className="controls-card"><ParameterPanel state={state} dispatch={dispatch} /></Paper>
       <Suspense fallback={<Paper className="preview-loading" withBorder>Načítám 3D náhled…</Paper>}>
-        <Preview result={geometry.last} stale={!current} status={geometry.status} />
+        <Preview result={geometry.last} stale={!current} status={geometry.status}
+          riskMap={showMap && analysis.report ? { key: analysis.inputHash, colors: analysis.report.colors } : null}
+          focused={showMap && analysis.report ? focused : null} />
       </Suspense>
       <section className="result-panel" aria-label="Rozměry a export">
         <Paper withBorder p="lg" radius="lg"><Text className="eyebrow">03 / PŘIPRAVENO PRO SLICER</Text><Title order={2} size="h3" mb="lg">Váš model</Title>
@@ -62,15 +70,20 @@ export function App() {
           <Text size="xs" c="dimmed" mt="sm">{current ? `${current.validation.triangles.toLocaleString('cs-CZ')} ploch v pracovním náhledu · jeden uzavřený solid` : geometry.status === 'failed' ? 'Upravte parametry a výpočet se zopakuje.' : 'Rozměry náhledu se aktualizují po výpočtu.'}</Text>
           {geometry.status === 'failed' && <Alert color="red" mt="md" role="alert">{geometry.error}</Alert>}
         </Paper>
+        <AnalysisPanel analysis={analysis} revision={state.revision} showMap={showMap} onMapChange={setShowMap} focused={focused} onFocus={setFocused} />
         <Paper withBorder p="lg" radius="lg"><Title order={2} size="h4" mb="sm">Z modelu k výtisku</Title>
           <Text size="xs" c="dimmed" mb="md">STL je v milimetrech, s krčkem na podložce. Pro export vytvoříme jemnější síť a znovu ji ověříme.</Text>
-          <Stack gap="sm"><Button fullWidth disabled={!current || exporter.exportRevision !== null} onClick={() => exporter.start(state.parameters, state.revision)}>
+          <Stack gap="sm"><Button fullWidth disabled={!valid || !current || exporter.exportRevision !== null} onClick={() => exporter.start(state.parameters, state.print, state.revision)}>
             {exporter.exportRevision !== null ? 'Připravuji jemné STL…' : 'Stáhnout STL ↓'}</Button>
             {exporter.exportRevision !== null && <><Text size="xs" c="dimmed">Exportuji revizi {exporter.exportRevision}. Další úpravy tento soubor nezmění.</Text><Button variant="subtle" color="gray" size="xs" onClick={exporter.cancel}>Zrušit export</Button></>}
             <Button fullWidth variant="default" disabled={!valid} onClick={() => download(serializeSettings({ schemaVersion: 1, generatorVersion: GENERATOR_VERSION, parameters: state.parameters, print: state.print }), `${modelName(state.parameters)}.json`, 'application/json')}>Uložit parametry JSON</Button>
           </Stack>
           {exporter.error && <Alert color="red" mt="md" role="alert">{exporter.error}</Alert>}
-          <Alert color="yellow" variant="light" mt="lg" title="STL bez tiskové analýzy">Geometrie se kontroluje. Mapa převisů a opory vrstev zatím není dostupná; dráhu ověřte ve sliceru.</Alert>
+          {exporter.notice && <Alert color="blue" mt="md" role="status">{exporter.notice}</Alert>}
+          <Alert color={analysis.report?.risk === 'high' ? 'red' : 'yellow'} variant="light" mt="lg"
+            title={analysis.report ? 'Varování neblokuje solid STL' : 'STL bez dokončené analýzy'}>
+            {analysis.report ? 'Tiskové riziko není chyba topologie. Varování si přečtěte a před tiskem ověřte dráhu ve sliceru.' : 'Geometricky validní STL lze stáhnout. Export se pokusí o finální analýzu; případné selhání výslovně oznámí.'}
+          </Alert>
         </Paper>
       </section>
     </div>

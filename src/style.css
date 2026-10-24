@@ -35,6 +35,16 @@ body { margin: 0; background: #f6f5ef; color: #183c35; }
 .dimension-label { font-family: 'Segoe UI', system-ui, sans-serif; background: #eef1e9df; font-size: 11px; color: #5b7262; white-space: nowrap; padding: 2px 5px; border-radius: 4px; pointer-events: none; }
 .axis-label { font: 600 10px 'Segoe UI', system-ui, sans-serif; color: #3d6e9e; pointer-events: none; }
 .canvas-dimensions { position: absolute; bottom: 48px; right: 20px; display: flex; align-items: center; gap: 10px; pointer-events: none; }
+.map-caption { position: absolute; left: 20px; top: 18px; font-size: 10px; letter-spacing: .8px; color: #536b58; pointer-events: none; }
+.print-panel { margin-top: 16px; }
+.analysis-metrics { display: grid; gap: 9px; margin: 16px 0; }
+.analysis-metrics > div { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.analysis-metrics dt { font-size: 11px; color: #718174; }
+.analysis-metrics dd { margin: 0; color: #214f42; white-space: nowrap; font-size: 13px; font-weight: 600; }
+.risk-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 10px; color: #627565; }
+.risk-legend span { display: inline-flex; gap: 5px; align-items: center; }
+.risk-legend i { width: 9px; height: 9px; display: inline-block; border-radius: 50%; }
+.risk-low { background: #6aa985; } .risk-warning { background: #e0ab45; } .risk-high { background: #d44738; }
 .stale-label { position: absolute; top: 12px; left: 16px; right: 16px; padding: 9px 12px; background: #fff7ddf5; color: #826325; border: 1px solid #e8dba9; border-radius: 7px; font-size: 11px; pointer-events: none; }
 .bed-label { position: absolute; bottom: 20px; left: 24px; color: #7a8a77; font-size: 9px; letter-spacing: 1px; pointer-events: none; }
 .result-panel { display: grid; gap: 16px; }

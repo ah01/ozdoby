@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { OrnamentParameters } from '../../domain/parameters';
+import type { OrnamentParameters, PrintAssumptions } from '../../domain/parameters';
+import { riskLabels } from '../../analysis/types';
 import { isCurrentResponse, requestHash, type GeometryRequest, type GeometryResponse } from '../../workers/protocol';
 
 export function download(data: BlobPart, name: string, type: string) {
@@ -14,19 +15,24 @@ export function useExport() {
   const worker = useRef<Worker | null>(null), serial = useRef(0);
   const [exportRevision, setExportRevision] = useState<number | null>(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   useEffect(() => () => worker.current?.terminate(), []);
   const cancel = () => { worker.current?.terminate(); worker.current = null; setExportRevision(null); };
-  const start = (parameters: OrnamentParameters, revision: number) => {
-    cancel(); setError(''); setExportRevision(revision);
+  const start = (parameters: OrnamentParameters, print: PrintAssumptions, revision: number) => {
+    cancel(); setError(''); setNotice(''); setExportRevision(revision);
     const frozen = structuredClone(parameters);
-    const request: GeometryRequest = { requestId: ++serial.current, revision, kind: 'stl', inputHash: requestHash(frozen, 'stl'), parameters: frozen };
+    const frozenPrint = structuredClone(print);
+    const request: GeometryRequest = { requestId: ++serial.current, revision, kind: 'stl', inputHash: requestHash(frozen, 'stl', frozenPrint), parameters: frozen, print: frozenPrint };
     try {
       const job = new Worker(new URL('../../workers/geometry.worker.ts', import.meta.url), { type: 'module' });
       worker.current = job;
       job.onmessage = ({ data }: MessageEvent<GeometryResponse>) => {
         if (worker.current !== job || !isCurrentResponse(data, request)) return;
-        if (data.status === 'ready' && data.stl)
+        if (data.status === 'ready' && data.stl) {
+          setNotice(data.analysis?.status === 'ready' ? `STL revize ${revision}: ${riskLabels[data.analysis.report.risk]}. Ověřte dráhu ve sliceru.`
+            : `STL revize ${revision} bez dokončené analýzy. ${data.analysis?.status === 'failed' ? data.analysis.message : ''}`);
           download(data.stl, `${modelName(frozen, data.validation.bounds.size[0]!)}.stl`, 'application/octet-stream');
+        }
         else if (data.status === 'failed') setError(data.error.message);
         job.terminate(); worker.current = null; setExportRevision(null);
       };
@@ -34,5 +40,5 @@ export function useExport() {
       job.postMessage(request);
     } catch { setError('Exportní worker není dostupný.'); cancel(); }
   };
-  return { start, cancel, error, exportRevision };
+  return { start, cancel, error, notice, exportRevision };
 }

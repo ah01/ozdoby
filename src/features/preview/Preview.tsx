@@ -4,8 +4,9 @@ import { Canvas, useThree } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
 import type { BufferGeometry, Material, Object3D, PerspectiveCamera } from 'three';
 import type { ReadyGeometry } from '../../app/useGeometry';
+import type { FocusRegion } from '../printability/AnalysisPanel';
 
-interface PreviewProps { result: ReadyGeometry | null; stale: boolean; status: string }
+interface PreviewProps { result: ReadyGeometry | null; stale: boolean; status: string; riskMap: { key: string; colors: Float32Array } | null; focused: FocusRegion | null }
 type ViewMode = 'print' | 'hanging';
 export interface PreviewDiagnostics {
   revision: number; geometries: number; materials: number; programs: number;
@@ -57,20 +58,24 @@ function CameraRig({ reset, mode, height, width, revision }: { reset: number; mo
   return <OrbitControls ref={controls} makeDefault minDistance={40} maxDistance={700} enableDamping dampingFactor={0.12} />;
 }
 
-function Model({ result, mode }: { result: ReadyGeometry; mode: ViewMode }) {
+function Model({ result, mode, riskMap, focused }: { result: ReadyGeometry; mode: ViewMode; riskMap: PreviewProps['riskMap']; focused: FocusRegion | null }) {
   const render = result.render!;
   const height = result.validation.bounds.size[2]!;
   return <group rotation={mode === 'hanging' ? [Math.PI, 0, 0] : [0, 0, 0]} position={[0, 0, mode === 'hanging' ? height : 0]}>
     <mesh castShadow receiveShadow>
       {/* Each revision owns a declarative geometry. R3F disposes the old GPU
           buffers; materials and the Canvas remain mounted across revisions. */}
-      <bufferGeometry key={result.revision}>
+      <bufferGeometry key={`${result.revision}:${riskMap?.key ?? 'neutral'}`}>
         <bufferAttribute attach="attributes-position" args={[render.positions, 3]} />
         <bufferAttribute attach="attributes-normal" args={[render.normals, 3]} />
-        <bufferAttribute attach="attributes-color" args={[render.colors, 3]} />
+        <bufferAttribute attach="attributes-color" args={[riskMap?.colors ?? render.colors, 3]} />
       </bufferGeometry>
       <meshStandardMaterial vertexColors metalness={0.12} roughness={0.48} />
     </mesh>
+    {focused && [focused.zMinMm, focused.zMaxMm].map((z, i) => <mesh key={i} position={[0, 0, z]}>
+      <ringGeometry args={[result.validation.bounds.size[0]! / 2 + 4, result.validation.bounds.size[0]! / 2 + 4.5, 80]} />
+      <meshBasicMaterial color="#498acc" transparent opacity={0.8} side={2} depthWrite={false} />
+    </mesh>)}
   </group>;
 }
 
@@ -94,12 +99,12 @@ function ContextMonitor({ onLost }: { onLost: () => void }) {
   return null;
 }
 
-export default function Preview({ result, stale, status }: PreviewProps) {
+export default function Preview({ result, stale, status, riskMap, focused }: PreviewProps) {
   const [mode, setMode] = useState<ViewMode>('print'), [reset, setReset] = useState(0);
   const [lost, setLost] = useState(false), [attempt, setAttempt] = useState(0);
   const retry = () => { setLost(false); setAttempt(a => a + 1); };
   const height = result?.validation.bounds.size[2] ?? 96, width = result?.validation.bounds.size[0] ?? 56;
-  return <section className="preview-panel" aria-label="3D náhled baňky" data-testid="preview" data-rendered-revision={result?.revision ?? -1}>
+  return <section className="preview-panel" aria-label="3D náhled baňky" data-testid="preview" data-rendered-revision={result?.revision ?? -1} data-risk-map={riskMap?.key ?? 'off'}>
     <div className="preview-toolbar"><Text className="eyebrow" mb="0">02 / 3D NÁHLED</Text><Button size="compact-xs" variant="subtle" onClick={() => setReset(value => value + 1)}>Reset kamery ↺</Button></div>
     <div className="canvas-frame">
       {!result?.render ? <div className="preview-loading"><Text c="dimmed">Připravuji náhled…</Text></div> : lost ? <Fallback retry={retry} /> :
@@ -115,13 +120,14 @@ export default function Preview({ result, stale, status }: PreviewProps) {
           <mesh position={[0, 0, -0.22]} receiveShadow><planeGeometry args={[220, 220]} /><meshStandardMaterial color="#e6eadf" roughness={1} /></mesh>
           <gridHelper args={[220, 22, '#adbda9', '#ccd7c6']} rotation={[Math.PI / 2, 0, 0]} position={[0, 0, -0.1]} />
           <axesHelper args={[28]} position={[-55, 0, 0]} />
-          <Model result={result} mode={mode} />
+          <Model result={result} mode={mode} riskMap={riskMap} focused={focused} />
           <Dimension width={width} height={height} />
           <CameraRig reset={reset} mode={mode} height={height} width={width} revision={result.revision} />
           <ContextMonitor onLost={() => setLost(true)} />
         </Canvas></PreviewBoundary>}
       {stale && result && <div className="stale-label" role="status">{status === 'invalid' ? 'Neplatný vstup · poslední platný náhled' : status === 'failed' ? 'Výpočet selhal · předchozí náhled' : 'Přepočítávám · zobrazen předchozí náhled'}</div>}
       {result && !lost && <div className="canvas-dimensions"><span className="axis-label">Z-UP · +Z</span><span className="dimension-label">Výška {height.toLocaleString('cs-CZ')} mm</span></div>}
+      {riskMap && <div className="map-caption">MAPA GEOMETRICKÝCH RIZIK{focused ? ` · Z ${focused.zMinMm.toFixed(1)}–${focused.zMaxMm.toFixed(1)} mm` : ''}</div>}
       <div className="bed-label">{mode === 'print' ? 'KRČEK NA PODLOŽCE · Z = 0' : 'ZAVĚŠENÝ POHLED · POUZE NÁHLED'}</div>
     </div>
     <Group justify="space-between" className="preview-controls" gap="sm"><SegmentedControl size="xs" value={mode}

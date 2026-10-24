@@ -1,7 +1,8 @@
-import { ornamentSchema, validateBottom, type OrnamentParameters, type PrintAssumptions, type ShapeId } from '../domain/parameters';
+import { ornamentSchema, type OrnamentParameters, type PrintAssumptions, type ShapeId } from '../domain/parameters';
 import { createPreset } from '../domain/presets';
 import { draftsFor, fields, setField, type DraftValues, type FieldErrors, type FieldId } from '../features/editor/fields';
 import { hashInput } from '../io/preset';
+import { printDraftsFor, resolvePrint, type PrintDrafts, type PrintErrors, type PrintFieldId } from '../features/printability/fields';
 
 export interface EditorState {
   parameters: OrnamentParameters;
@@ -9,15 +10,21 @@ export interface EditorState {
   drafts: DraftValues;
   errors: FieldErrors;
   revision: number;
+  printDrafts: PrintDrafts;
+  printErrors: PrintErrors;
+  printRevision: number;
 }
 export type EditorAction = { type: 'field'; id: FieldId; value: string }
+  | { type: 'printField'; id: PrintFieldId; value: string }
   | { type: 'preset'; shape: ShapeId } | { type: 'reset' };
 
 export function initialEditor(parameters: OrnamentParameters, print: PrintAssumptions): EditorState {
-  return { parameters, print, drafts: draftsFor(parameters), errors: {}, revision: 0 };
+  const printDrafts = printDraftsFor(print);
+  return { parameters, print, drafts: draftsFor(parameters), errors: {}, revision: 0,
+    printDrafts, printErrors: resolvePrint(parameters, printDrafts).errors, printRevision: 0 };
 }
 
-function resolveDrafts(base: OrnamentParameters, drafts: DraftValues, print: PrintAssumptions): { parameters?: OrnamentParameters; errors: FieldErrors } {
+function resolveDrafts(base: OrnamentParameters, drafts: DraftValues): { parameters?: OrnamentParameters; errors: FieldErrors } {
   const candidate = structuredClone(base), errors: FieldErrors = {};
   for (const field of fields) {
     const text = drafts[field.id].trim().replace(',', '.');
@@ -39,21 +46,26 @@ function resolveDrafts(base: OrnamentParameters, drafts: DraftValues, print: Pri
     }
     return { errors };
   }
-  const bottomError = validateBottom(validated.data, print);
-  if (bottomError) return { errors: { 'neck.lengthMm': bottomError } };
   return { parameters: validated.data, errors };
+}
+
+function withPrint(state: EditorState, parameters: OrnamentParameters, printDrafts: PrintDrafts): Pick<EditorState, 'print' | 'printDrafts' | 'printErrors' | 'printRevision'> {
+  const resolved = resolvePrint(parameters, printDrafts);
+  const changed = !!resolved.print && hashInput(resolved.print) !== hashInput(state.print);
+  return { print: changed ? resolved.print! : state.print, printDrafts, printErrors: resolved.errors, printRevision: state.printRevision + (changed ? 1 : 0) };
 }
 
 export function editorReducer(state: EditorState, action: EditorAction): EditorState {
   if (action.type === 'preset' || action.type === 'reset') {
     const parameters = createPreset(action.type === 'preset' ? action.shape : state.parameters.shape);
-    const bottomError = validateBottom(parameters, state.print);
-    return { ...initialEditor(parameters, state.print),
-      errors: bottomError ? { 'neck.lengthMm': bottomError } : {}, revision: state.revision + 1 };
+    return { ...state, parameters, drafts: draftsFor(parameters), errors: {},
+      ...withPrint(state, parameters, state.printDrafts), revision: state.revision + 1 };
   }
+  if (action.type === 'printField') return { ...state, ...withPrint(state, state.parameters, { ...state.printDrafts, [action.id]: action.value }) };
   const drafts = { ...state.drafts, [action.id]: action.value };
-  const resolved = resolveDrafts(state.parameters, drafts, state.print);
+  const resolved = resolveDrafts(state.parameters, drafts);
   if (!resolved.parameters) return { ...state, drafts, errors: resolved.errors };
   const changed = hashInput(resolved.parameters) !== hashInput(state.parameters);
-  return { ...state, drafts, errors: {}, parameters: resolved.parameters, revision: state.revision + (changed ? 1 : 0) };
+  return { ...state, drafts, errors: {}, parameters: changed ? resolved.parameters : state.parameters,
+    ...withPrint(state, resolved.parameters, state.printDrafts), revision: state.revision + (changed ? 1 : 0) };
 }

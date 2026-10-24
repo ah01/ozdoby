@@ -1,0 +1,603 @@
+[
+  {
+    "id": "S01",
+    "inputHash": "f0855699",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "elongated",
+      "body": {
+        "baseDiameterMm": 56,
+        "heightMm": 88,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 0,
+        "twistDeg": 0,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.2,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "warning",
+    "overhang": {
+      "maxAngleDeg": 35.32856543983033,
+      "riskyAreaMm2": 0,
+      "evaluatedAreaMm2": 10619.021481885831,
+      "riskyAreaFraction": 0,
+      "riskyFaces": 0,
+      "zMinMm": null,
+      "zMaxMm": null
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.182722238918112,
+      "maxLowerDistanceMm": 0.182722238918112,
+      "minUpperOverlap": 0.5939505801819733,
+      "minLowerOverlap": 0.5939505801819733,
+      "contourAngles": 0,
+      "comparedSections": 955,
+      "distanceQueries": 0,
+      "minCurvatureRadiusMm": null
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 95,
+        "zMaxMm": 96,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 95.6,
+        "zMaxMm": 96,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  },
+  {
+    "id": "S02",
+    "inputHash": "2337e0a4",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "round",
+      "body": {
+        "baseDiameterMm": 90,
+        "heightMm": 35,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 0,
+        "twistDeg": 0,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.2,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "high",
+    "overhang": {
+      "maxAngleDeg": 72.90058925810249,
+      "riskyAreaMm2": 6584.518590051068,
+      "evaluatedAreaMm2": 14333.331782351119,
+      "riskyAreaFraction": 0.45938506761970727,
+      "riskyFaces": 5376,
+      "zMinMm": 9,
+      "zMaxMm": 24.3125
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.7507999346938838,
+      "maxLowerDistanceMm": 0.7507999346938838,
+      "minUpperOverlap": 0,
+      "minLowerOverlap": 0,
+      "contourAngles": 0,
+      "comparedSections": 424,
+      "distanceQueries": 0,
+      "minCurvatureRadiusMm": null
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "NORMAL_OVERHANG",
+        "severity": "high",
+        "title": "Rychlé rozšiřování povrchu",
+        "detail": "Vnější normály ukazují rozšiřování nad zadaný limit od svislé stěny.",
+        "recommendation": "Zvětšete výšku těla či délku náběhu, případně snižte amplitudu.",
+        "zMinMm": 9,
+        "zMaxMm": 24.3125,
+        "measured": 72.90058925810249,
+        "limit": 45
+      },
+      {
+        "code": "UPPER_SUPPORT",
+        "severity": "high",
+        "title": "Nízký odhad opory nové vrstvy",
+        "detail": "Rozšiřování, zužování nebo twist mění obrys v obou směrech. Body vyššího obrysu jsou daleko od úseček nižšího.",
+        "recommendation": "Snižte vrstvu, amplitudu nebo twist; případně zvětšete výšku těla či délku náběhu.",
+        "zMinMm": 10.200000000000001,
+        "zMaxMm": 41.00000000000001,
+        "measured": 0.7507999346938838,
+        "limit": 0.29250000000000004
+      },
+      {
+        "code": "LOWER_RETREAT",
+        "severity": "high",
+        "title": "Prudká změna předchozího obrysu",
+        "detail": "Rozšiřování, zužování nebo twist mění obrys v obou směrech. Body nižšího obrysu jsou daleko od úseček vyššího; mohou zanikat detaily.",
+        "recommendation": "Snižte vrstvu, amplitudu nebo twist; případně zvětšete výšku těla či délku náběhu.",
+        "zMinMm": 10.200000000000001,
+        "zMaxMm": 41.00000000000001,
+        "measured": 0.7507999346938838,
+        "limit": 0.29250000000000004
+      },
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 42,
+        "zMaxMm": 43,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 42.6,
+        "zMaxMm": 43,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  },
+  {
+    "id": "S04",
+    "inputHash": "0004a788",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "elongated",
+      "body": {
+        "baseDiameterMm": 56,
+        "heightMm": 88,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 1,
+        "twistDeg": 0,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.2,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "warning",
+    "overhang": {
+      "maxAngleDeg": 35.415065439749675,
+      "riskyAreaMm2": 0,
+      "evaluatedAreaMm2": 11619.934756306517,
+      "riskyAreaFraction": 0,
+      "riskyFaces": 0,
+      "zMinMm": null,
+      "zMaxMm": null
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.18271766494712635,
+      "maxLowerDistanceMm": 0.18272223891811273,
+      "minUpperOverlap": 0.5939607445619415,
+      "minLowerOverlap": 0.5939505801819718,
+      "contourAngles": 444,
+      "comparedSections": 955,
+      "distanceQueries": 848040,
+      "minCurvatureRadiusMm": 0.030175213936002417
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "FINE_DETAIL",
+        "severity": "warning",
+        "title": "Žebra mohou být příliš jemná",
+        "detail": "Lokální poloměr křivosti obrysu je menší než řád šířky extruze. Offset ve sliceru může detail vyhladit nebo odstranit.",
+        "recommendation": "Snižte počet žeber nebo amplitudu a zkontrolujte skutečnou dráhu ve sliceru.",
+        "zMinMm": 8,
+        "zMaxMm": 96,
+        "measured": 0.030175213936002417,
+        "limit": 0.45
+      },
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 95,
+        "zMaxMm": 96,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 95.6,
+        "zMaxMm": 96,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  },
+  {
+    "id": "S05",
+    "inputHash": "72a73121",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "elongated",
+      "body": {
+        "baseDiameterMm": 56,
+        "heightMm": 88,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 1,
+        "twistDeg": 120,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.2,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "warning",
+    "overhang": {
+      "maxAngleDeg": 43.669403735785814,
+      "riskyAreaMm2": 0,
+      "evaluatedAreaMm2": 11814.389412736746,
+      "riskyAreaFraction": 0,
+      "riskyFaces": 0,
+      "zMinMm": null,
+      "zMaxMm": null
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.20800786912183425,
+      "maxLowerDistanceMm": 0.21095554035430833,
+      "minUpperOverlap": 0.5377602908403684,
+      "minLowerOverlap": 0.5312099103237593,
+      "contourAngles": 444,
+      "comparedSections": 955,
+      "distanceQueries": 848040,
+      "minCurvatureRadiusMm": 0.02256169501131455
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "FINE_DETAIL",
+        "severity": "warning",
+        "title": "Žebra mohou být příliš jemná",
+        "detail": "Lokální poloměr křivosti obrysu je menší než řád šířky extruze. Offset ve sliceru může detail vyhladit nebo odstranit.",
+        "recommendation": "Snižte počet žeber nebo amplitudu a zkontrolujte skutečnou dráhu ve sliceru.",
+        "zMinMm": 8,
+        "zMaxMm": 96,
+        "measured": 0.02256169501131455,
+        "limit": 0.45
+      },
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 95,
+        "zMaxMm": 96,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 95.6,
+        "zMaxMm": 96,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  },
+  {
+    "id": "S07-layer-010",
+    "inputHash": "c56b93d4",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "elongated",
+      "body": {
+        "baseDiameterMm": 56,
+        "heightMm": 88,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 0,
+        "twistDeg": 0,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.1,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "warning",
+    "overhang": {
+      "maxAngleDeg": 35.32856543983033,
+      "riskyAreaMm2": 0,
+      "evaluatedAreaMm2": 10619.021481885831,
+      "riskyAreaFraction": 0,
+      "riskyFaces": 0,
+      "zMinMm": null,
+      "zMaxMm": null
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.09136300713749712,
+      "maxLowerDistanceMm": 0.09136300713749712,
+      "minUpperOverlap": 0.7969710952500064,
+      "minLowerOverlap": 0.7969710952500064,
+      "contourAngles": 0,
+      "comparedSections": 1913,
+      "distanceQueries": 0,
+      "minCurvatureRadiusMm": null
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 95,
+        "zMaxMm": 96,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 95.8,
+        "zMaxMm": 96,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  },
+  {
+    "id": "S07-layer-025",
+    "inputHash": "6669d278",
+    "algorithmVersion": "1.0.0",
+    "parameters": {
+      "schemaVersion": 1,
+      "shape": "elongated",
+      "body": {
+        "baseDiameterMm": 56,
+        "heightMm": 88,
+        "maxRadiusAt": 0.5,
+        "tipRadiusMm": 1.2
+      },
+      "neck": {
+        "diameterMm": 14,
+        "lengthMm": 8
+      },
+      "surface": {
+        "ribs": 12,
+        "amplitudeMm": 0,
+        "twistDeg": 0,
+        "blendLengthMm": 8
+      }
+    },
+    "print": {
+      "nozzleDiameterMm": 0.4,
+      "extrusionWidthMm": 0.45,
+      "layerHeightMm": 0.25,
+      "firstLayerHeightMm": 0.2,
+      "bottomSolidLayers": 3,
+      "maxOverhangFromVerticalDeg": 45,
+      "minOverlapRatio": 0.35
+    },
+    "risk": "warning",
+    "overhang": {
+      "maxAngleDeg": 35.32856543983033,
+      "riskyAreaMm2": 0,
+      "evaluatedAreaMm2": 10619.021481885831,
+      "riskyAreaFraction": 0,
+      "riskyFaces": 0,
+      "zMinMm": null,
+      "zMaxMm": null
+    },
+    "layers": {
+      "maxUpperDistanceMm": 0.2284039784466554,
+      "maxLowerDistanceMm": 0.2284039784466554,
+      "minUpperOverlap": 0.492435603451877,
+      "minLowerOverlap": 0.492435603451877,
+      "contourAngles": 0,
+      "comparedSections": 768,
+      "distanceQueries": 0,
+      "minCurvatureRadiusMm": null
+    },
+    "tip": {
+      "diameterMm": 2.4,
+      "smallContourLimitMm": 2.7,
+      "risk": 1
+    },
+    "messages": [
+      {
+        "code": "SMALL_TIP",
+        "severity": "warning",
+        "title": "Malý koncový obrys",
+        "detail": "Koncový průměr je malý vůči šířce extruze. Jde o heuristiku rizika přehřívání či vynechání detailu, nikoli fyzikální záruku.",
+        "recommendation": "Zvažte větší poloměr zakončení a ověřte chlazení a poslední dráhu ve sliceru.",
+        "zMinMm": 95,
+        "zMaxMm": 96,
+        "measured": 2.4,
+        "limit": 2.7
+      },
+      {
+        "code": "OPEN_TIP",
+        "severity": "info",
+        "title": "Zakončení může zůstat otevřené",
+        "detail": "Uzavírací disk STL není víčko vase výtisku. Ve vase režimu může na konci zůstat otvor přibližně podle posledního průřezu.",
+        "recommendation": "Ověřte poslední obvody ve sliceru a otvor změřte na výtisku.",
+        "zMinMm": 95.5,
+        "zMaxMm": 96,
+        "measured": 2.4
+      },
+      {
+        "code": "BED_ADHESION",
+        "severity": "info",
+        "title": "Adheze kruhového krčku",
+        "detail": "Základna má průměr 14 mm. Samotná geometrie nepotvrzuje přilnavost k podložce.",
+        "recommendation": "Zvažte brim ve sliceru a ověřte první vrstvy.",
+        "zMinMm": 0,
+        "zMaxMm": 8
+      }
+    ]
+  }
+]

@@ -12,5 +12,9 @@ worker.onmessage = (event: MessageEvent<GeometryRequest>) => {
   if (response.status === 'ready' && response.stl) transfer.push(response.stl);
   if (response.status === 'ready' && response.render)
     transfer.push(response.render.positions.buffer, response.render.normals.buffer, response.render.colors.buffer);
+  if (response.status === 'ready' && response.analysis?.status === 'ready') {
+    const report = response.analysis.report;
+    transfer.push(report.colors.buffer, report.faceRisks.buffer, report.overhang.anglesDeg.buffer);
+  }
   worker.postMessage(response, transfer);
 };
