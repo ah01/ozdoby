@@ -1,6 +1,6 @@
 # Stav implementace
 
-Aktualizováno 24. 10. 2026. Generátor 0.1.0. Výchozí stav byl prázdný Git repozitář obsahující pouze `doc/IMPLEMENTATION_PLAN.md`. Základ fáze 0–1 je nyní uložen v commitu `42ed391`. Původní plán je zachován; na přání uživatele používá editor Mantine.
+Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.0.0. Základ fáze 0–1 je v commitu `42ed391`, Mantine editor ve `3209ca8` a tisková analýza v `d61e788`. Na přání uživatele editor nově vyplňuje celé okno, s levým posuvným nastavením a spodním souhrnem/exportem; detaily analýzy se otevírají v popoveru.
 
 ## Přehled fází
 
@@ -40,9 +40,9 @@ Prostředí: Windows, Node **26.12.1**, npm **11.20.0**, PrusaSlicer **2.9.6**, 
 | `npm run build` | Prošlo včetně produkčního worker chunku. Windows sandbox při prvním pokusu blokoval `realpath`; kontrola mimo sandbox prošla. |
 | `npm run fixtures` | Dva validní solid STL/JSON a manifest, nezávislý STL round-trip. |
 | `scripts/verify-slicer.ps1` | Prošlo načtení i slicing obou fixture a diagnostická kritéria G-code. |
-| `npm run test:e2e` | 6 Playwright scénářů v odděleném Chrome: vstupy/klávesnice, exportní revize, pohled, úložiště, WebGL fallback, životní cyklus, mobilní šířka, rychlé úpravy a reset. |
-| Životní cyklus náhledu | Po 100 dokončených změnách zůstává 5 geometrií, 5 materiálů, 5 programů; stejná kamera i target. Snímek prostředků: `verification/phase-2-resources.json`. |
-| Snímky aplikace | Původní stránka `verification/phase-1-app.jpg`; Mantine editor a žebrovaný 3D model `verification/phase-2-editor.jpg`. |
+| `npm run test:e2e` | 11 scénářů: původní editor, aktuálnost analýzy, bitově stejné STL při změně extruze, selhání analytického workeru, samostatný posuvník a pevná spodní lišta, popover a mobilní vysouvací nastavení. |
+| Životní cyklus náhledu | Po 100 dokončených změnách zůstává 5 geometrií, 5 materiálů, 5 programů; stejná kamera i target, bez chyb konzole. Aktuální záznam: `verification/workspace-resources.json`; původní fáze 2 je zachovaná. |
+| Snímky aplikace | Historické fáze 1–2 zůstávají uložené. Aktuální UI: `verification/workspace-fullscreen.jpg` a `verification/workspace-analysis-popover.jpg`. |
 
 Testy pokrývají tři presety, meze, referenční válec (objem, jednotky, orientaci), determinismus, nezměněný krček, nulovou amplitudu, směr twistu, chyby topologie, neplatná čísla/JSON, odmítnutí extrémní deformační obálky nebo limitu zdrojů, STL round-trip, opožděné odpovědi a nezávislé průniky neincidentních trojúhelníků s pozitivními i negativními kontrolami. Vzorky vnitřků/hran trojúhelníků zkroucené žebrované sítě nepřekračují deklarovanou analytickou mez.
 
@@ -53,6 +53,6 @@ S01: 56 × 56 × 96 mm, 39 936 ploch, rameno 35,60° od svislice. PrusaSlicer hl
 ## Závislosti a nejbližší pokračování
 
 1. Doložit vizuální kontrolu S01/S02 ve sliceru a snímky. CLI je dostupné, ale spuštěný G-code viewer neposkytl automatizaci cílovatelné okno. Generované soubory a přesný checklist jsou připravené. Nejde o důvod blokovat nezávislou práci na editoru.
-2. Fáze 3 je implementovaná; podrobnosti, metriky a omezení jsou v `verification/phase-3.md`. Na přání uživatele následuje fullscreen rozložení s levým posuvným nastavením a spodním souhrnem/exportem, detaily v popoveru.
+2. Fáze 3 je implementovaná; podrobnosti, metriky a omezení jsou v `verification/phase-3.md`. Fullscreen rozložení je implementované. Stránka sama nemá posuvník; nastavení vlevo a podrobný popover se posouvají samostatně. Spodní lišta je vždy viditelná.
 3. Fáze 4: import JSON v UI, rozšíření Playwright scénářů o report a importní chyby, zbytek slicerové matice, výkonnostní p95 rozpočty. Výkon zatím není přijat jako ověřený; velký Three.js chunk je načítaný samostatně a jeho velikost zůstává zdokumentovaná.
 4. Fyzická tiskárna, skutečný profil, materiál a mechanické měření budou potřeba pro fázi 6. Zatím nebyly vyžadovány k nezávislé implementaci.

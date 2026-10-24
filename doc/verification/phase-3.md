@@ -27,7 +27,11 @@ Dráhy STL nejsou přesné osy extruze; offset a skutečná spiralizace sliceru 
 
 42 jednotkových testů prošlo. Nová sada dokládá válec s 0° a výjimkou podložky, rozšiřující kužel s 45° do 1°, zužující kužel s nulovým normálovým převisem a ztrátou překryvu, zlepšení po snížení vrstvy, mezivrstvové extrémy, rozdíl twistu, přesnost segmentového BVH, stabilitu metrik mezi pracovní a exportní sítí, aktuálnost hashů a validní STL při nedokončené analýze.
 
-Tři nové Playwright scénáře prošly: změna tiskových předpokladů bez změny revize geometrie i STL bajtů; mapa svázaná s posledními vstupy a lokalizace oblasti; vynucené selhání analytického workeru bez blokace validního STL. Produkční build s oběma workery prošel. Předchozí šestice testů editoru z fáze 2 zůstává v sadě pro další regresní průchod.
+Tři nové Playwright scénáře dokládají změnu tiskových předpokladů bez změny revize geometrie i STL bajtů; mapu svázanou s posledními vstupy a lokalizaci oblasti; vynucené selhání analytického workeru bez blokace validního STL. Regresní sada zahrnuje také původních šest scénářů editoru a dva testy fullscreen rozložení. Produkční build s oběma workery prošel.
+
+Po uložení analýzy do commitu `d61e788` bylo na přání uživatele změněno rozložení: editor zabírá celý viewport, levý panel má vlastní posuvník, stručné hodnocení a export zůstávají ve spodní liště. Detaily, legenda a přepínač mapy jsou v popoveru s vlastním posuvníkem. Popover je pojmenovaný nadpisem, ovladatelný klávesnicí a vrací fokus na tlačítko. Na mobilní šířce se nastavení otevírá zleva jako Drawer. Nejde o přepnutí prohlížeče přes Fullscreen API.
+
+Aktuální test životního cyklu používá pevný viewport 1024 × 768 a software renderer, aby oddělil kontrolu uvolňování prostředků od různých pixelových nároků. Desktopové fullscreen rozložení se samostatně ověřuje v šířce 1440 px a mobilní v 390 px. Po 100 dokončených změnách zůstalo 5 geometrií, 5 materiálů a 5 programů, beze změny kamery/targetu a bez chyb konzole. Strojový záznam: `workspace-resources.json`. Snímky: `workspace-fullscreen.jpg`, `workspace-analysis-popover.jpg`.
 
 Reprodukovatelné souhrny: `phase-3-report.json`, generované příkazem `npx --no-install tsx scripts/analyse-fixtures.ts`.
 

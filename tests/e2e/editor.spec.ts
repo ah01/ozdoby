@@ -74,6 +74,10 @@ test('missing WebGL and blocked storage keep parameter editing and solid STL exp
 });
 
 test('100 completed revisions preserve camera and do not accumulate live render resources', async ({ page }) => {
+  test.setTimeout(180_000);
+  // Keep the software-rendered pixel workload fixed; this audits resource
+  // lifetime, while dedicated layout tests cover the 1440px fullscreen view.
+  await page.setViewportSize({ width: 1024, height: 768 });
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });

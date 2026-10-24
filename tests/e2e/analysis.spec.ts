@@ -25,6 +25,7 @@ test('print-only edits replace the report without changing geometry revision or 
 
 test('risk colors follow the latest print inputs and warning regions are localized', async ({ page }) => {
   await page.goto('/'); await ready(page);
+  await page.getByTestId('analysis-details-button').click();
   await page.getByLabel('Mapa rizik', { exact: true }).check();
   const initialHash = await page.getByTestId('analysis-status').getAttribute('data-input-hash');
   await expect(page.getByTestId('preview')).toHaveAttribute('data-risk-map', initialHash!);
@@ -34,11 +35,12 @@ test('risk colors follow the latest print inputs and warning regions are localiz
   const hash = await page.getByTestId('analysis-status').getAttribute('data-input-hash');
   expect(hash).not.toBe(initialHash);
   await expect(page.getByTestId('preview')).toHaveAttribute('data-risk-map', hash!);
+  await page.getByTestId('analysis-details-button').click();
   await page.getByRole('button', { name: /^Zvýraznit Z/ }).first().click();
   await expect(page.getByText(/^MAPA GEOMETRICKÝCH RIZIK · Z/)).toBeVisible();
   await page.getByLabel('Průměr těla', { exact: true }).fill('90');
   await page.getByLabel('Výška těla', { exact: true }).fill('35'); await ready(page);
-  await expect(page.getByText('Vysoké geometrické riziko', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Podrobnosti analýzy: Vysoké geometrické riziko', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true })).toBeEnabled();
 });
 
@@ -47,6 +49,7 @@ test('a failed analysis is unassessed and keeps geometrically valid STL availabl
   await page.goto('/');
   await expect(page.getByTestId('geometry-status')).toHaveAttribute('data-state', 'ready');
   await expect(page.getByTestId('analysis-status')).toHaveAttribute('data-state', 'failed');
+  await page.getByTestId('analysis-details-button').click();
   await expect(page.getByText('Analýza nedokončena', { exact: true })).toBeVisible();
   const pending = page.waitForEvent('download'); await page.getByRole('button', { name: 'Stáhnout STL ↓', exact: true }).click();
   const path = testInfo.outputPath('still-valid.stl'); await (await pending).saveAs(path);

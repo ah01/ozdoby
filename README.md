@@ -2,7 +2,7 @@
 
 Lokální generátor parametrických vánočních ozdob pro spiral vase tisk. React + strict TypeScript + Vite, Mantine pro rozhraní a React Three Fiber/drei pro Three.js náhled. Geometrie, validace a STL encoder jsou čisté TypeScript moduly. Výpočty i příprava renderovacích dat běží v module Web Workeru.
 
-Implementované jsou technické výstupy fáze 0 a fáze 1–2: tři presety, rozměry, krček, žebra, twist, 3D náhled, ukládání platného nastavení a stažení solid STL/JSON. Úplná tisková analýza a objímka přijdou v dalších fázích; MVP ani fyzický výtisk zatím nejsou ověřeny. Podrobnosti a otevřené brány: [stav implementace](doc/IMPLEMENTATION_STATUS.md).
+Implementované jsou technické výstupy fáze 0 a fáze 1–3: tři presety, rozměry, krček, žebra, twist, 3D náhled, ukládání, solid STL/JSON a geometrická tisková analýza s mapou rizik. Editor vyplňuje celé okno, levé nastavení má vlastní posuvník, rozměry/hodnocení/export zůstávají dole a podrobné výsledky jsou v popoveru. Na malé obrazovce se nastavení otevírá zleva jako vysouvací panel. Kompletní slicerová matice, import JSON v UI a objímka přijdou v dalších fázích; MVP ani fyzický výtisk zatím nejsou ověřeny. Podrobnosti a otevřené brány: [stav implementace](doc/IMPLEMENTATION_STATUS.md).
 
 ## Spuštění
 
@@ -26,6 +26,8 @@ npm run fixtures
 npm run check
 # Průchozí scénáře a 100 dokončených změn náhledu:
 npm run test:e2e
+# Referenční souhrny analýzy (S01, S02, žebra/twist, různé vrstvy):
+npx --no-install tsx scripts/analyse-fixtures.ts
 ```
 
 Před novým `npm ci` zastavte běžící Vite; Windows jinak nemůže vyměnit otevřenou nativní knihovnu Rolldown. Některé sandboxy Windows omezují `realpath` workeru; produkční sestavení bylo ověřeno mimo takový sandbox.
@@ -53,7 +55,9 @@ Slicerový skript vytvoří lokální diagnostické G-code a rozvinutou konfigur
 - `src/features/editor/`: Mantine číselné vstupy/slidery a popis editovatelných polí. Zod v doméně zůstává společným kontraktem.
 - `src/features/preview/`: samostatně načítaný Three.js náhled a čistá příprava renderovací kopie pro worker.
 - `src/features/export/`: export zamrazené revize a stahování souborů.
+- `src/analysis/`: normálové převisy, obousměrné vzdálenosti obrysů, zjemnění a strukturovaný report.
+- `src/features/printability/`: tiskové vstupy, přehled rizik, podrobnosti a legenda.
 - `tests/`: geometrie, 50 deterministických kombinací, poškozené sítě, průniky, STL round-trip, worker protokol, stav editoru a Playwright scénáře.
 - `scripts/`: reprodukovatelné referenční výstupy a kontrola sliceru.
 
-Geometrie je v mm, osa Z směřuje vzhůru a krček začíná na Z = 0. STL je uzavřený solid bez vnitřní stěny. Uzavřený STL neznamená uzavřený konec vase výtisku. Odhad tisknutelnosti ani ověřená dráha nenahrazují skutečný výtisk.
+Geometrie je v mm, osa Z směřuje vzhůru a krček začíná na Z = 0. STL je uzavřený solid bez vnitřní stěny. Tiskové vstupy mají vlastní revizi a analytický worker: jejich změna nepřegeneruje tělo ani nezmění STL bajty. Uzavřený STL neznamená uzavřený konec vase výtisku. Odhad tisknutelnosti ani ověřená dráha nenahrazují skutečný výtisk.

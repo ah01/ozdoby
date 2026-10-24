@@ -6,21 +6,22 @@ export interface FocusRegion { code: string; zMinMm: number; zMaxMm: number }
 interface Props {
   analysis: ReturnType<typeof useAnalysis>; revision: number; showMap: boolean; onMapChange: (value: boolean) => void;
   focused: FocusRegion | null; onFocus: (region: FocusRegion | null) => void;
+  detailsOnly?: boolean;
 }
 const number = (value: number) => value.toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
 const percent = (value: number) => `${number(value * 100)} %`;
 const color = (severity: AnalysisMessage['severity']) => severity === 'high' ? 'red' : severity === 'warning' ? 'yellow' : 'blue';
 
-export function AnalysisPanel({ analysis, revision, showMap, onMapChange, focused, onFocus }: Props) {
+export function AnalysisPanel({ analysis, revision, showMap, onMapChange, focused, onFocus, detailsOnly = false }: Props) {
   const report = analysis.report;
-  return <Paper withBorder p="lg" radius="lg" className="analysis-panel" aria-label="Tisková analýza">
+  return <Paper withBorder={!detailsOnly} p="lg" radius="lg" className="analysis-panel" aria-label="Tisková analýza">
     <Group justify="space-between" mb="sm"><Title order={2} size="h4">Tisková analýza</Title>
       <Switch checked={showMap} onChange={event => onMapChange(event.currentTarget.checked)} label="Mapa rizik" size="xs" /></Group>
-    <div role="status" aria-live="polite" data-testid="analysis-status" data-state={analysis.status} data-input-hash={analysis.inputHash} data-revision={revision}>
+    {!detailsOnly && <div role="status" aria-live="polite" data-testid="analysis-status" data-state={analysis.status} data-input-hash={analysis.inputHash} data-revision={revision}>
       <Badge color={!report ? 'gray' : report.risk === 'high' ? 'red' : report.risk === 'warning' ? 'yellow' : 'pine'} variant="light">
         {report ? riskLabels[report.risk] : analysis.status === 'pending' ? 'Vyhodnocuji · nevyhodnoceno' : 'Nevyhodnoceno'}
       </Badge>
-    </div>
+    </div>}
     {analysis.status === 'invalid' && <Text size="xs" c="dimmed" mt="sm">Opravte parametry tvaru a tiskové předpoklady.</Text>}
     {analysis.status === 'failed' && <Alert color="yellow" mt="sm" title="Analýza nedokončena">{analysis.error}</Alert>}
     {showMap && !report && <Text size="xs" c="dimmed" mt="sm">Mapa čeká na aktuální výsledek; staré hodnocení se nezobrazuje.</Text>}
