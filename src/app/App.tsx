@@ -1,89 +1,88 @@
-import { useEffect, useRef, useState } from 'react';
-import { defaultPrint, type OrnamentParameters, type ShapeId } from '../domain/parameters';
-import { createPreset, presetLabels } from '../domain/presets';
+import { lazy, Suspense, useEffect, useReducer, useState } from 'react';
+import { Alert, Badge, Button, Divider, Group, Modal, Paper, Stack, Text, Title } from '@mantine/core';
 import { GENERATOR_VERSION, serializeSettings } from '../io/preset';
-import { isCurrentResponse, requestHash, type GeometryRequest, type GeometryResponse } from '../workers/protocol';
+import { ParameterPanel } from '../features/editor/ParameterPanel';
+import { download, modelName, useExport } from '../features/export/useExport';
+import { editorReducer, initialEditor } from './editorState';
+import { readSavedSettings, saveSettings } from './storage';
+import { useGeometry } from './useGeometry';
 
-function download(data: BlobPart, name: string, type: string) {
-  const url = URL.createObjectURL(new Blob([data], { type }));
-  const link = document.createElement('a'); link.href = url; link.download = name; link.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+const Preview = lazy(() => import('../features/preview/Preview'));
+const mm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 2 });
+function loadSettings() {
+  try { return readSavedSettings(window.localStorage); }
+  catch { return readSavedSettings({ getItem: () => { throw new Error('Storage unavailable'); } }); }
 }
 
 export function App() {
-  const [shape, setShape] = useState<ShapeId>('elongated');
-  const [result, setResult] = useState<GeometryResponse | null>(null);
-  const [exporting, setExporting] = useState(false);
-  const [error, setError] = useState('');
-  const serial = useRef(0), exportWorker = useRef<Worker | null>(null);
-  const parameters = createPreset(shape);
+  const [restored] = useState(loadSettings);
+  const [state, dispatch] = useReducer(editorReducer, restored.settings, saved => initialEditor(saved.parameters, saved.print));
+  const [storageNotice, setStorageNotice] = useState('');
+  const [saving, setSaving] = useState(false), [help, setHelp] = useState(false);
+  const valid = Object.keys(state.errors).length === 0;
+  const geometry = useGeometry(state.parameters, state.revision, valid);
+  const exporter = useExport();
 
   useEffect(() => {
-    const p = createPreset(shape);
-    const identity: GeometryRequest = { requestId: ++serial.current, revision: serial.current, kind: 'mesh', inputHash: requestHash(p, 'mesh'), parameters: p };
-    setResult(null); setError('');
-    let worker: Worker;
-    try { worker = new Worker(new URL('../workers/geometry.worker.ts', import.meta.url), { type: 'module' }); }
-    catch { setError('Výpočetní worker není dostupný. Zkuste obnovit stránku.'); return; }
-    worker.onmessage = ({ data }: MessageEvent<GeometryResponse>) => {
-      if (isCurrentResponse(data, identity)) setResult(data);
-    };
-    worker.onerror = () => setError('Výpočet modelu selhal. Zkuste obnovit stránku.');
-    worker.postMessage(identity);
-    // Termination cancels synchronous work as well as queued jobs. No old queue
-    // accumulates when presets are changed rapidly or StrictMode remounts effects.
-    return () => worker.terminate();
-  }, [shape]);
-  useEffect(() => () => exportWorker.current?.terminate(), []);
+    if (!valid) { setSaving(false); return; }
+    setSaving(true);
+    const timer = setTimeout(() => {
+      try { setStorageNotice(saveSettings(window.localStorage, { schemaVersion: 1, generatorVersion: GENERATOR_VERSION, parameters: state.parameters, print: state.print })); }
+      catch { setStorageNotice('Nastavení nelze uložit v tomto prohlížeči. Pro uchování použijte export JSON.'); }
+      setSaving(false);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [state.parameters, state.print, valid]);
 
-  const name = (p: OrnamentParameters) => `bulb-${p.shape}-${p.body.baseDiameterMm}x${p.body.heightMm + p.neck.lengthMm}-neck${p.neck.diameterMm}`;
-  function exportStl() {
-    const frozen = structuredClone(parameters);
-    const request: GeometryRequest = { requestId: ++serial.current, revision: serial.current, kind: 'stl', inputHash: requestHash(frozen, 'stl'), parameters: frozen };
-    setExporting(true); setError('');
-    let worker: Worker;
-    try { worker = new Worker(new URL('../workers/geometry.worker.ts', import.meta.url), { type: 'module' }); }
-    catch { setExporting(false); setError('Exportní worker není dostupný.'); return; }
-    exportWorker.current = worker;
-    worker.onmessage = ({ data }: MessageEvent<GeometryResponse>) => {
-      if (!isCurrentResponse(data, request)) return;
-      setExporting(false);
-      if (data.status === 'ready' && data.stl) download(data.stl, `${name(frozen)}.stl`, 'application/octet-stream');
-      else if (data.status === 'failed') setError(data.error.message);
-      worker.terminate(); exportWorker.current = null;
-    };
-    worker.onerror = () => { setError('Export STL selhal.'); setExporting(false); worker.terminate(); exportWorker.current = null; };
-    worker.postMessage(request);
-  }
-  const validation = result?.status === 'ready' ? result.validation : null;
-  return <main>
-    <header><a className="brand" href="./">baňka<span> / </span>studio</a><span className="version">Pracovní verze · 0.1</span></header>
-    <section className="intro"><p className="eyebrow">PARAMETRICKÉ VÁNOČNÍ OZDOBY</p>
-      <h1>Od profilu<br />k prvnímu výtisku.</h1>
-      <p>První verze generátoru uzavřených modelů pro spiral vase tisk. Vyberte referenční siluetu a stáhněte si tělo baňky v milimetrech.</p>
-    </section>
-    <section className="workspace" aria-label="Referenční generátor">
-      <div className="settings"><p className="eyebrow">01 / SILUETA</p><h2>Základní tvar</h2>
-        <fieldset><legend className="sr-only">Vyberte siluetu</legend>{(Object.keys(presetLabels) as ShapeId[]).map(id =>
-          <label className={`preset ${shape === id ? 'selected' : ''}`} key={id}>
-            <input type="radio" name="shape" value={id} checked={shape === id} onChange={() => setShape(id)} />
-            <span>{presetLabels[id]}</span><span className="preset-size">56 × {createPreset(id).body.heightMm} mm</span>
-          </label>)}</fieldset>
-        <p className="note">Rozměr siluety nezahrnuje krček. Interaktivní 3D editor bude následovat v další fázi.</p>
-      </div>
-      <div className="summary"><p className="eyebrow">02 / MODEL A EXPORT</p><h2>{shape === 'drop' ? 'Kapka' : `${presetLabels[shape]} baňka`}</h2>
-        <dl><div><dt>Celková výška</dt><dd>{parameters.body.heightMm + parameters.neck.lengthMm}<small> mm</small></dd></div>
-          <div><dt>Průměr těla</dt><dd>{parameters.body.baseDiameterMm}<small> mm</small></dd></div>
-          <div><dt>Krček · průměr × délka</dt><dd>14 × 8<small> mm</small></dd></div></dl>
-        <p role="status" aria-live="polite">{error || (result?.status === 'failed' ? result.error.message : validation
-          ? `Geometrie ověřena · ${validation.triangles.toLocaleString('cs-CZ')} ploch v pracovním modelu · 1 uzavřená komponenta`
-          : 'Přepočítávám geometrii…')}</p>
-        <div className="actions"><button onClick={exportStl} disabled={!validation || exporting}>{exporting ? 'Připravuji STL…' : 'Stáhnout solid STL ↓'}</button>
-          <button className="secondary" onClick={() => download(serializeSettings({ schemaVersion: 1, generatorVersion: GENERATOR_VERSION, parameters, print: defaultPrint }), `${name(parameters)}.json`, 'application/json')}>Parametry JSON</button></div>
-        <p className="note">STL používá jemnější síť a před stažením prochází novou validací. Orientace pro tisk: krček dole, Z nahoru.</p>
-      </div>
-    </section>
-    <aside><strong>Před tiskem ověřte dráhu ve sliceru.</strong><p>Analýza převisů a vrstev zatím není součástí aplikace. Nízká adheze krčku může vyžadovat brim. Uzavřený STL nezaručuje uzavřený výtisk: na špičce může zůstat otvor. Tisk ani zavěšení dosud nejsou fyzicky ověřeny.</p></aside>
-    <footer><span>Lokální generování · bez účtu a serveru</span><span>Jedna stěna. Váš tvar.</span></footer>
+  const current = geometry.current;
+  const summary = { ready: 'Geometrie ověřena', pending: 'Přepočítávám', invalid: 'Neplatné vstupy', failed: 'Výpočet selhal' }[geometry.status];
+  return <main className="app" data-testid="editor" data-valid={valid}>
+    <header className="app-header"><a className="brand" href="./">baňka<span> / </span>studio</a>
+      <Group gap="sm"><Badge variant="light" color="pine" size="sm">Vše vzniká ve vašem prohlížeči</Badge>
+        <Button variant="subtle" size="xs" onClick={() => setHelp(true)}>Jak tisknout</Button></Group></header>
+    <div className="editor-intro"><div><Text className="eyebrow">PARAMETRICKÉ VÁNOČNÍ OZDOBY</Text><Title order={1}>Vytvořte si vlastní baňku.</Title></div>
+      <Text size="xs" c="dimmed" className="save-indicator">{storageNotice ? 'Místní ukládání není dostupné' : !valid ? 'Rozepsané změny nejsou uložené' : saving ? 'Ukládám nastavení…' : 'Nastavení uloženo v tomto prohlížeči'}</Text></div>
+    {(storageNotice || restored.notice) && <Alert color="yellow" mb="md" title="Místní nastavení">{storageNotice || restored.notice}</Alert>}
+    <div className="editor-grid">
+      <Paper withBorder radius="lg" className="controls-card"><ParameterPanel state={state} dispatch={dispatch} /></Paper>
+      <Suspense fallback={<Paper className="preview-loading" withBorder>Načítám 3D náhled…</Paper>}>
+        <Preview result={geometry.last} stale={!current} status={geometry.status} />
+      </Suspense>
+      <section className="result-panel" aria-label="Rozměry a export">
+        <Paper withBorder p="lg" radius="lg"><Text className="eyebrow">03 / PŘIPRAVENO PRO SLICER</Text><Title order={2} size="h3" mb="lg">Váš model</Title>
+          <div data-testid="geometry-status" data-state={geometry.status} data-revision={state.revision} role="status" aria-live="polite">
+            <Badge color={geometry.status === 'ready' ? 'pine' : geometry.status === 'pending' ? 'gray' : 'red'} variant="light">{summary}</Badge>
+          </div>
+          <dl className="dimension-summary"><div><dt>Průměr základního profilu</dt><dd>{mm(state.parameters.body.baseDiameterMm)} <small>mm</small></dd></div>
+            <div><dt>Celková výška s krčkem</dt><dd>{mm(state.parameters.body.heightMm + state.parameters.neck.lengthMm)} <small>mm</small></dd></div>
+            <div><dt>Krček · průměr × délka</dt><dd>{mm(state.parameters.neck.diameterMm)} × {mm(state.parameters.neck.lengthMm)} <small>mm</small></dd></div></dl>
+          <Divider my="md" />
+          <Text size="xs" c="dimmed">Skutečné rozměry včetně žeber · X × Y × Z</Text>
+          <Text size="sm" fw={600} mt={4} data-testid="actual-dimensions">{current ? `${current.validation.bounds.size.map(mm).join(' × ')} mm` : 'Čeká na platný výpočet'}</Text>
+          <Text size="xs" c="dimmed" mt="sm">{current ? `${current.validation.triangles.toLocaleString('cs-CZ')} ploch v pracovním náhledu · jeden uzavřený solid` : geometry.status === 'failed' ? 'Upravte parametry a výpočet se zopakuje.' : 'Rozměry náhledu se aktualizují po výpočtu.'}</Text>
+          {geometry.status === 'failed' && <Alert color="red" mt="md" role="alert">{geometry.error}</Alert>}
+        </Paper>
+        <Paper withBorder p="lg" radius="lg"><Title order={2} size="h4" mb="sm">Z modelu k výtisku</Title>
+          <Text size="xs" c="dimmed" mb="md">STL je v milimetrech, s krčkem na podložce. Pro export vytvoříme jemnější síť a znovu ji ověříme.</Text>
+          <Stack gap="sm"><Button fullWidth disabled={!current || exporter.exportRevision !== null} onClick={() => exporter.start(state.parameters, state.revision)}>
+            {exporter.exportRevision !== null ? 'Připravuji jemné STL…' : 'Stáhnout STL ↓'}</Button>
+            {exporter.exportRevision !== null && <><Text size="xs" c="dimmed">Exportuji revizi {exporter.exportRevision}. Další úpravy tento soubor nezmění.</Text><Button variant="subtle" color="gray" size="xs" onClick={exporter.cancel}>Zrušit export</Button></>}
+            <Button fullWidth variant="default" disabled={!valid} onClick={() => download(serializeSettings({ schemaVersion: 1, generatorVersion: GENERATOR_VERSION, parameters: state.parameters, print: state.print }), `${modelName(state.parameters)}.json`, 'application/json')}>Uložit parametry JSON</Button>
+          </Stack>
+          {exporter.error && <Alert color="red" mt="md" role="alert">{exporter.error}</Alert>}
+          <Alert color="yellow" variant="light" mt="lg" title="STL bez tiskové analýzy">Geometrie se kontroluje. Mapa převisů a opory vrstev zatím není dostupná; dráhu ověřte ve sliceru.</Alert>
+        </Paper>
+      </section>
+    </div>
+    <footer className="app-footer"><Text size="xs" c="dimmed">Solid STL → jedna stěna ve spiral vase režimu. Na konci může zůstat otvor.</Text><Text size="xs" c="dimmed">Bez backendu · fyzický tisk dosud neověřen</Text></footer>
+    <Modal opened={help} onClose={() => setHelp(false)} title="Tisk v režimu spiral vase" centered size="lg">
+      <Stack gap="md"><Text size="sm">Stáhněte solid STL a ve sliceru zachovejte milimetry a krček dole. Soubor obsahuje pouze tělo baňky.</Text>
+        <ol className="print-instructions"><li>Zapněte skutečný spiral vase režim: jeden perimetr, nulová výplň a nulové horní vrstvy.</li>
+          <li>Začněte bez podpěr. Počet spodních plných vrstev ověřte tak, aby zůstaly v přímém krčku.</li>
+          <li>Prohlédněte spirálovou dráhu od krčku přes rameno až k poslednímu obvodu. Nízká adheze krčku může vyžadovat brim.</li>
+          <li>Zkontrolujte koncový otvor. Uzavřený solid STL neznamená uzavřený vase výtisk.</li></ol>
+        <Alert color="yellow">Výchozí předpoklady: tryska {mm(state.print.nozzleDiameterMm)} mm, extruze {mm(state.print.extrusionWidthMm)} mm, vrstva {mm(state.print.layerHeightMm)} mm. Skutečný profil tiskárny a materiálu je nutné ověřit. Generátor zatím nepotvrzuje fyzickou tisknutelnost.</Alert>
+      </Stack>
+    </Modal>
   </main>;
 }

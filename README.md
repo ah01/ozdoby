@@ -1,8 +1,8 @@
 # Baňka studio
 
-Lokální generátor parametrických vánočních ozdob pro spiral vase tisk. React + strict TypeScript + Vite; geometrie, validace a STL encoder jsou čisté TypeScript moduly. Výpočty aplikace běží v module Web Workeru.
+Lokální generátor parametrických vánočních ozdob pro spiral vase tisk. React + strict TypeScript + Vite, Mantine pro rozhraní a React Three Fiber/drei pro Three.js náhled. Geometrie, validace a STL encoder jsou čisté TypeScript moduly. Výpočty i příprava renderovacích dat běží v module Web Workeru.
 
-Aktuálně jsou implementovány technické výstupy fáze 0 a základ fáze 1. Stránka umí vybrat tři referenční presety a stáhnout solid STL nebo verzovaný JSON. Interaktivní 3D editor, formulář rozměrů, úplná tisková analýza a objímka přijdou v dalších fázích. Podrobnosti a otevřené brány: [stav implementace](doc/IMPLEMENTATION_STATUS.md).
+Implementované jsou technické výstupy fáze 0 a fáze 1–2: tři presety, rozměry, krček, žebra, twist, 3D náhled, ukládání platného nastavení a stažení solid STL/JSON. Úplná tisková analýza a objímka přijdou v dalších fázích; MVP ani fyzický výtisk zatím nejsou ověřeny. Podrobnosti a otevřené brány: [stav implementace](doc/IMPLEMENTATION_STATUS.md).
 
 ## Spuštění
 
@@ -24,9 +24,13 @@ npm run build
 npm run fixtures
 # Všechny kontroly výše:
 npm run check
+# Průchozí scénáře a 100 dokončených změn náhledu:
+npm run test:e2e
 ```
 
 Před novým `npm ci` zastavte běžící Vite; Windows jinak nemůže vyměnit otevřenou nativní knihovnu Rolldown. Některé sandboxy Windows omezují `realpath` workeru; produkční sestavení bylo ověřeno mimo takový sandbox.
+
+Prohlížečové testy používají samostatný dočasný profil již nainstalovaného Google Chrome a software WebGL pro opakovatelnost. Osobního profilu ani dat prohlížeče se nedotýkají. Spustí Vite, pokud na portu 5173 ještě neběží. Výstupy a případné trace soubory jsou v ignorovaném `test-results/`. Testy mají také vývojový snímek počtu živých renderovacích prostředků; tato diagnostika není součástí produkčního buildu.
 
 `npm run fixtures` deterministicky vytvoří dva STL, JSON nastavení a manifest s SHA-256, rozměry, topologií a výsledkem nezávislého STL načtení v `doc/verification/fixtures/`.
 
@@ -45,8 +49,11 @@ Slicerový skript vytvoří lokální diagnostické G-code a rozvinutou konfigur
 - `src/geometry/`: analytický profil, povrch, adaptivní triangulace a topologická validace.
 - `src/io/`: float32 binární STL a verzovaný JSON.
 - `src/workers/`: revize, request ID, hash, strukturované chyby a vlastnictví bufferů.
-- `src/app/`: minimální české rozhraní pro ověření generátoru.
-- `tests/`: geometrie, 50 deterministických kombinací, poškozené sítě, průniky, STL round-trip a worker protokol.
+- `src/app/`: reducer s revizemi, ukládání, worker hook, složení editoru a jednotné téma Mantine.
+- `src/features/editor/`: Mantine číselné vstupy/slidery a popis editovatelných polí. Zod v doméně zůstává společným kontraktem.
+- `src/features/preview/`: samostatně načítaný Three.js náhled a čistá příprava renderovací kopie pro worker.
+- `src/features/export/`: export zamrazené revize a stahování souborů.
+- `tests/`: geometrie, 50 deterministických kombinací, poškozené sítě, průniky, STL round-trip, worker protokol, stav editoru a Playwright scénáře.
 - `scripts/`: reprodukovatelné referenční výstupy a kontrola sliceru.
 
 Geometrie je v mm, osa Z směřuje vzhůru a krček začíná na Z = 0. STL je uzavřený solid bez vnitřní stěny. Uzavřený STL neznamená uzavřený konec vase výtisku. Odhad tisknutelnosti ani ověřená dráha nenahrazují skutečný výtisk.

@@ -10,5 +10,7 @@ worker.onmessage = (event: MessageEvent<GeometryRequest>) => {
   const transfer: Transferable[] = response.status === 'ready'
     ? [response.mesh.positions.buffer, response.mesh.indices.buffer, response.mesh.faceRegions.buffer] : [];
   if (response.status === 'ready' && response.stl) transfer.push(response.stl);
+  if (response.status === 'ready' && response.render)
+    transfer.push(response.render.positions.buffer, response.render.normals.buffer, response.render.colors.buffer);
   worker.postMessage(response, transfer);
 };

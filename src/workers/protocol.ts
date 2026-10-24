@@ -2,11 +2,12 @@ import type { OrnamentParameters } from '../domain/parameters';
 import type { MeshResult } from '../geometry/mesh';
 import type { MeshValidation } from '../geometry/validate';
 import { hashInput } from '../io/preset';
+import type { RenderData } from '../features/preview/renderData';
 
 export interface RequestIdentity { requestId: number; revision: number; kind: 'mesh' | 'stl'; inputHash: string }
 export interface GeometryRequest extends RequestIdentity { parameters: OrnamentParameters }
 export type GeometryResponse = RequestIdentity & (
-  | { status: 'ready'; mesh: MeshResult; validation: MeshValidation; stl?: ArrayBuffer }
+  | { status: 'ready'; mesh: MeshResult; validation: MeshValidation; render?: RenderData; stl?: ArrayBuffer }
   | { status: 'failed'; error: { code: string; message: string } }
 );
 export const requestHash = (parameters: OrnamentParameters, kind: GeometryRequest['kind']): string =>
