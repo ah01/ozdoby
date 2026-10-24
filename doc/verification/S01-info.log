@@ -1,0 +1,14 @@
+[S01-elongated-smooth.stl]
+size_x = 56.000000
+size_y = 56.000000
+size_z = 96.000000
+min_x = -28.000000
+min_y = -28.000000
+min_z = 0.000000
+max_x = 28.000000
+max_y = 28.000000
+max_z = 96.000000
+number_of_facets = 39936
+manifold = yes
+number_of_parts =  1
+volume = 92461.320312

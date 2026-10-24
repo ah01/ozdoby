@@ -1,0 +1,150 @@
+[
+  {
+    "id": "S01-elongated-smooth",
+    "generatorVersion": "0.1.0",
+    "inputHash": "7ccd5cb9",
+    "stlSha256": "faf48f033b1b01c006c40834674810c3210172f7c4e1427a78c0887cb343e585",
+    "stlBytes": 1996884,
+    "validation": {
+      "valid": true,
+      "issues": [],
+      "vertices": 19970,
+      "triangles": 39936,
+      "edges": 59904,
+      "components": 1,
+      "euler": 2,
+      "volumeMm3": 92461.7797080119,
+      "bounds": {
+        "min": [
+          -28,
+          -28,
+          0
+        ],
+        "max": [
+          28,
+          28,
+          96
+        ],
+        "size": [
+          56,
+          56,
+          96
+        ]
+      }
+    },
+    "stlRoundTrip": {
+      "valid": true,
+      "issues": [],
+      "vertices": 19970,
+      "triangles": 39936,
+      "edges": 59904,
+      "components": 1,
+      "euler": 2,
+      "volumeMm3": 92461.77979813263,
+      "bounds": {
+        "min": [
+          -28,
+          -28,
+          0
+        ],
+        "max": [
+          28,
+          28,
+          96
+        ],
+        "size": [
+          56,
+          56,
+          96
+        ]
+      }
+    },
+    "sampling": {
+      "angles": 256,
+      "heights": 78,
+      "toleranceMm": 0.05,
+      "errorBoundMm": 0.04343522360827897
+    },
+    "phase0Estimate": {
+      "smoothShoulderAngleDeg": 35.599219958976164,
+      "exceedsNormalLimit": false,
+      "maxRadialStepMm": 0.14318181818181816,
+      "terminalDiameterMm": 2.4,
+      "note": "Analytický hladký profil; úplná vrstvová analýza a mapa rizik patří do fáze 3."
+    }
+  },
+  {
+    "id": "S02-short-wide-risk",
+    "generatorVersion": "0.1.0",
+    "inputHash": "a319224c",
+    "stlSha256": "cf3050d0c11e1fb730f1b15af156192fcbd5e99fc5fdac2985e571b01196d295",
+    "stlBytes": 2099284,
+    "validation": {
+      "valid": true,
+      "issues": [],
+      "vertices": 20994,
+      "triangles": 41984,
+      "edges": 62976,
+      "components": 1,
+      "euler": 2,
+      "volumeMm3": 90147.04080585827,
+      "bounds": {
+        "min": [
+          -45,
+          -45,
+          0
+        ],
+        "max": [
+          45,
+          45,
+          43
+        ],
+        "size": [
+          90,
+          90,
+          43
+        ]
+      }
+    },
+    "stlRoundTrip": {
+      "valid": true,
+      "issues": [],
+      "vertices": 20994,
+      "triangles": 41984,
+      "edges": 62976,
+      "components": 1,
+      "euler": 2,
+      "volumeMm3": 90147.04083662404,
+      "bounds": {
+        "min": [
+          -45,
+          -45,
+          0
+        ],
+        "max": [
+          45,
+          45,
+          43
+        ],
+        "size": [
+          90,
+          90,
+          43
+        ]
+      }
+    },
+    "sampling": {
+      "angles": 256,
+      "heights": 82,
+      "toleranceMm": 0.05,
+      "errorBoundMm": 0.04806261369454015
+    },
+    "phase0Estimate": {
+      "smoothShoulderAngleDeg": 72.9325951815356,
+      "exceedsNormalLimit": true,
+      "maxRadialStepMm": 0.6514285714285712,
+      "terminalDiameterMm": 2.4,
+      "note": "Analytický hladký profil; úplná vrstvová analýza a mapa rizik patří do fáze 3."
+    }
+  }
+]

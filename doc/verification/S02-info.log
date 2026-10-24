@@ -1,0 +1,14 @@
+[S02-short-wide-risk.stl]
+size_x = 90.000000
+size_y = 90.000000
+size_z = 43.000000
+min_x = -45.000000
+min_y = -45.000000
+min_z = 0.000000
+max_x = 45.000000
+max_y = 45.000000
+max_z = 43.000000
+number_of_facets = 41984
+manifold = yes
+number_of_parts =  1
+volume = 90145.726562

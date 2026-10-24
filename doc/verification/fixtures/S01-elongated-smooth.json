@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "generatorVersion": "0.1.0",
+  "parameters": {
+    "schemaVersion": 1,
+    "shape": "elongated",
+    "body": {
+      "baseDiameterMm": 56,
+      "heightMm": 88,
+      "maxRadiusAt": 0.5,
+      "tipRadiusMm": 1.2
+    },
+    "neck": {
+      "diameterMm": 14,
+      "lengthMm": 8
+    },
+    "surface": {
+      "ribs": 12,
+      "amplitudeMm": 0,
+      "twistDeg": 0,
+      "blendLengthMm": 8
+    }
+  },
+  "print": {
+    "nozzleDiameterMm": 0.4,
+    "extrusionWidthMm": 0.45,
+    "layerHeightMm": 0.2,
+    "firstLayerHeightMm": 0.2,
+    "bottomSolidLayers": 3,
+    "maxOverhangFromVerticalDeg": 45,
+    "minOverlapRatio": 0.35
+  }
+}
