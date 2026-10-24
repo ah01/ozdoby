@@ -25,6 +25,10 @@ npm run dev
 
 Otevřete `http://127.0.0.1:5173`. Pokud je port obsazený, Vite vypíše jiný port. Instalace se obejde bez instalačních skriptů balíčků; esbuild používá nativní volitelný balíček z lockfile. Runtime aplikace nepoužívá CDN, externí fonty ani backend.
 
+## Produkční nasazení do podadresáře
+
+Spusťte `npm run build` a nahrajte celý obsah adresáře `dist/` včetně `assets/` na svůj web. Konfigurace Vite používá `base: './'`, takže HTML, styly, dynamicky načítané moduly i workery mají relativní cesty a aplikace funguje například na `https://example.cz/nastroje/banka/`. URL adresáře má končit lomítkem (nebo použijte přímo `index.html`). Výstup obsluhujte přes HTTP/HTTPS; modulové workery vyžadují webový server.
+
 ## Kontroly a referenční soubory
 
 ```powershell

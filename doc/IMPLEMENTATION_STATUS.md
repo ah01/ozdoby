@@ -1,6 +1,6 @@
 # Stav implementace
 
-Aktualizováno 24. 10. 2026. Generátor 0.1.0, analýza 1.4.0. Základ fáze 0–1 je v commitu `42ed391`, Mantine editor ve `3209ca8`, tisková analýza v `d61e788`, vyšší kapacita/detail STL v `cb19fda` a nové tvary/průběhy v `ffbb71e`. Editor vyplňuje celé okno, s levým posuvným nastavením a spodním souhrnem/exportem; detaily analýzy se otevírají v popoveru. Mapa má přepínač přímo nad modelem, krček dovoluje 5–24 mm, poloměr zakončení 0–3 mm a složité kombinace využívají lokální plánování sítě a analýzy.
+Aktualizováno 25. 10. 2026. Generátor 0.1.0, analýza 1.4.0. Základ fáze 0–1 je v commitu `42ed391`, Mantine editor ve `3209ca8`, tisková analýza v `d61e788`, vyšší kapacita/detail STL v `cb19fda` a nové tvary/průběhy v `ffbb71e`. Editor vyplňuje celé okno, s levým posuvným nastavením a spodním souhrnem/exportem; detaily analýzy se otevírají v popoveru. Mapa má přepínač přímo nad modelem, krček dovoluje 5–24 mm, poloměr zakončení 0–3 mm a složité kombinace využívají lokální plánování sítě a analýzy.
 
 ## Přehled fází
 
@@ -43,6 +43,7 @@ Prostředí: Windows, Node **26.12.1**, npm **11.20.0**, PrusaSlicer **2.9.6**, 
 | `npm run typecheck` | Prošlo. |
 | `npm test` | 110 testů v 9 souborech prošlo; dosavadní geometrie, analýza a limity, navíc všech pět nulových špiček a malých disků, přesnost až k vrcholu s deformacemi, float32 round-trip a normály, bezpečné sloučení koncového prstence a bodová analýza. |
 | `npm run build` | Prošlo včetně produkčního worker chunku. Windows sandbox při prvním pokusu blokoval `realpath`; kontrola mimo sandbox prošla. |
+| Relativní produkční build | Vite `base: './'`; ověřeno přes běžný statický server pod `/test/nested/banka/`. HTML/CSS, lazy 3D modul i oba workery se načetly z podadresáře bez chyb. Geometrie i analýza dokončeny, stažen validovaný binární STL s 39 936 trojúhelníky. |
 | `npm run fixtures` | Dva validní solid STL/JSON a manifest, nezávislý STL round-trip. |
 | `scripts/verify-slicer.ps1` | Prošlo načtení i slicing obou fixture a diagnostická kritéria G-code. |
 | `npm run test:e2e` | 18 scénářů prošlo: původní editor a transformace, aktuálnost analýzy, STL/JSON, 100 úprav náhledu, fullscreen/mobilní nastavení, detaily STL, samostatné resety a chyby, nově 5mm krček se skutečným STL, přímý přepínač mapy a hustá kombinace žeber/vln/twistu s dokončenou analýzou. |

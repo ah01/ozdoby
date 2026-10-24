@@ -1,6 +1,7 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  base: './',
   build: {
     rolldownOptions: {
       onwarn(warning, defaultHandler) {
